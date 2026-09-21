@@ -9,6 +9,7 @@ builder.Services.AddSingleton<SqlConnectionFactory>();
 
 builder.Services.AddScoped<ProdutoRepository>();
 builder.Services.AddScoped<DashboardRepository>();
+builder.Services.AddScoped<EstoqueRepository>();
 
 var app = builder.Build();
 

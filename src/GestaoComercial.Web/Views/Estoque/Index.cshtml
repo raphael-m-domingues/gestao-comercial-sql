@@ -1,0 +1,76 @@
+@model IEnumerable<GestaoComercial.Web.Models.EstoqueBaixoViewModel>
+
+@{
+    ViewData["Title"] = "Estoque baixo";
+}
+
+<div class="mb-4">
+    <h1 class="mb-1">Alerta de reposição</h1>
+
+    <p class="text-muted mb-0">
+        Produtos sem estoque ou com quantidade igual ou inferior
+        ao estoque mínimo.
+    </p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th class="text-center">Quantidade atual</th>
+                        <th class="text-center">Estoque mínimo</th>
+                        <th class="text-center">Repor</th>
+                        <th class="text-center">Situação</th>
+                        <th>Atualização</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var produto in Model)
+                    {
+                        <tr>
+                            <td>@produto.Produto</td>
+                            <td>@produto.Categoria</td>
+
+                            <td class="text-center">
+                                @produto.QuantidadeAtual
+                            </td>
+
+                            <td class="text-center">
+                                @produto.EstoqueMinimo
+                            </td>
+
+                            <td class="text-center fw-semibold">
+                                @produto.QuantidadeParaReposicao
+                            </td>
+
+                            <td class="text-center">
+                                @if (produto.SituacaoEstoque == "SEM ESTOQUE")
+                                {
+                                    <span class="badge text-bg-danger">
+                                        Sem estoque
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-warning">
+                                        Estoque baixo
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @produto.AtualizadoEm.ToString(
+                                    "dd/MM/yyyy HH:mm")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
