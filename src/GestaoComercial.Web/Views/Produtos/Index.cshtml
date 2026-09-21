@@ -1,0 +1,86 @@
+@model IEnumerable<GestaoComercial.Web.Models.ProdutoListagemViewModel>
+
+@{
+    ViewData["Title"] = "Produtos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Produtos</h1>
+        <p class="text-muted mb-0">
+            Consulta de produtos, preços e quantidades em estoque.
+        </p>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th class="text-end">Preço de custo</th>
+                        <th class="text-end">Preço de venda</th>
+                        <th class="text-center">Estoque</th>
+                        <th class="text-center">Situação</th>
+                        <th class="text-center">Cadastro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var produto in Model)
+                    {
+                        <tr>
+                            <td>@produto.Nome</td>
+                            <td>@produto.Categoria</td>
+                            <td class="text-end">
+                                @produto.PrecoCusto.ToString("C")
+                            </td>
+                            <td class="text-end">
+                                @produto.PrecoVenda.ToString("C")
+                            </td>
+                            <td class="text-center">
+                                @produto.QuantidadeAtual
+                            </td>
+                            <td class="text-center">
+                                @if (produto.QuantidadeAtual == 0)
+                                {
+                                    <span class="badge text-bg-danger">
+                                        Sem estoque
+                                    </span>
+                                }
+                                else if (produto.QuantidadeAtual <= produto.EstoqueMinimo)
+                                {
+                                    <span class="badge text-bg-warning">
+                                        Estoque baixo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-success">
+                                        Normal
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (produto.Ativo)
+                                {
+                                    <span class="badge text-bg-success">
+                                        Ativo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        Inativo
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
