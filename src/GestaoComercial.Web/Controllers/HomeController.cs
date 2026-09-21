@@ -1,14 +1,24 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+using GestaoComercial.Web.Data;
 using GestaoComercial.Web.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GestaoComercial.Web.Controllers;
 
-public class HomeController : Controller
+public sealed class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly DashboardRepository _dashboardRepository;
+
+    public HomeController(DashboardRepository dashboardRepository)
     {
-        return View();
+        _dashboardRepository = dashboardRepository;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var resumo = await _dashboardRepository.ObterResumoAsync();
+
+        return View(resumo);
     }
 
     public IActionResult Privacy()
@@ -16,9 +26,17 @@ public class HomeController : Controller
         return View();
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [ResponseCache(
+        Duration = 0,
+        Location = ResponseCacheLocation.None,
+        NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var modelo = new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+        };
+
+        return View(modelo);
     }
 }

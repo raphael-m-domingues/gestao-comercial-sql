@@ -4,8 +4,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Registra os serviços utilizados pela aplicação.
 builder.Services.AddControllersWithViews();
+
 builder.Services.AddSingleton<SqlConnectionFactory>();
+
 builder.Services.AddScoped<ProdutoRepository>();
+builder.Services.AddScoped<DashboardRepository>();
 
 var app = builder.Build();
 

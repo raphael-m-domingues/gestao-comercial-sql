@@ -1,8 +1,88 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model GestaoComercial.Web.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Painel";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Painel gerencial</h1>
+        <p class="text-muted mb-0">
+            Resumo atual do estoque do Minimercado Domingues.
+        </p>
+    </div>
+
+    <a asp-controller="Produtos"
+       asp-action="Index"
+       class="btn btn-dark">
+        Consultar produtos
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm border-primary">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Produtos ativos</h2>
+                <p class="display-6 mb-0 text-primary">
+                    @Model.TotalProdutosAtivos
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm border-success">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Unidades em estoque</h2>
+                <p class="display-6 mb-0 text-success">
+                    @Model.TotalUnidadesEstoque
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm border-danger">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Produtos sem estoque</h2>
+                <p class="display-6 mb-0 text-danger">
+                    @Model.ProdutosSemEstoque
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm border-warning">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Produtos com estoque baixo</h2>
+                <p class="display-6 mb-0 text-warning">
+                    @Model.ProdutosEstoqueBaixo
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Valor do estoque pelo custo</h2>
+                <p class="h3 mb-0">
+                    @Model.ValorCustoEstoque.ToString("C")
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h6 text-muted">Valor potencial de venda</h2>
+                <p class="h3 mb-0">
+                    @Model.ValorVendaEstoque.ToString("C")
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
