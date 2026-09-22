@@ -4,13 +4,34 @@
     ViewData["Title"] = "Produtos";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+@if (TempData["MensagemSucesso"] is string mensagem)
+{
+    <div class="alert alert-success alert-dismissible fade show"
+         role="alert">
+        @mensagem
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+<div class="d-flex justify-content-between
+            align-items-center mb-4">
     <div>
         <h1 class="mb-1">Produtos</h1>
+
         <p class="text-muted mb-0">
             Consulta de produtos, preços e quantidades em estoque.
         </p>
     </div>
+
+    <a asp-action="Criar"
+       class="btn btn-dark">
+        Novo produto
+    </a>
 </div>
 
 <div class="card shadow-sm">
@@ -21,63 +42,148 @@
                     <tr>
                         <th>Produto</th>
                         <th>Categoria</th>
-                        <th class="text-end">Preço de custo</th>
-                        <th class="text-end">Preço de venda</th>
-                        <th class="text-center">Estoque</th>
-                        <th class="text-center">Situação</th>
-                        <th class="text-center">Cadastro</th>
+                        <th class="text-end">
+                            Preço de custo
+                        </th>
+                        <th class="text-end">
+                            Preço de venda
+                        </th>
+                        <th class="text-center">
+                            Estoque
+                        </th>
+                        <th class="text-center">
+                            Situação
+                        </th>
+                        <th class="text-center">
+                            Cadastro
+                        </th>
+                        <th class="text-end">
+                            Ações
+                        </th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    @foreach (var produto in Model)
+                    @if (!Model.Any())
                     {
                         <tr>
-                            <td>@produto.Nome</td>
-                            <td>@produto.Categoria</td>
-                            <td class="text-end">
-                                @produto.PrecoCusto.ToString("C")
-                            </td>
-                            <td class="text-end">
-                                @produto.PrecoVenda.ToString("C")
-                            </td>
-                            <td class="text-center">
-                                @produto.QuantidadeAtual
-                            </td>
-                            <td class="text-center">
-                                @if (produto.QuantidadeAtual == 0)
-                                {
-                                    <span class="badge text-bg-danger">
-                                        Sem estoque
-                                    </span>
-                                }
-                                else if (produto.QuantidadeAtual <= produto.EstoqueMinimo)
-                                {
-                                    <span class="badge text-bg-warning">
-                                        Estoque baixo
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge text-bg-success">
-                                        Normal
-                                    </span>
-                                }
-                            </td>
-                            <td class="text-center">
-                                @if (produto.Ativo)
-                                {
-                                    <span class="badge text-bg-success">
-                                        Ativo
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge text-bg-secondary">
-                                        Inativo
-                                    </span>
-                                }
+                            <td colspan="8"
+                                class="text-center text-muted py-4">
+                                Nenhum produto cadastrado.
                             </td>
                         </tr>
+                    }
+                    else
+                    {
+                        @foreach (var produto in Model)
+                        {
+                            <tr>
+                                <td>@produto.Nome</td>
+
+                                <td>@produto.Categoria</td>
+
+                                <td class="text-end">
+                                    @produto.PrecoCusto.ToString("C")
+                                </td>
+
+                                <td class="text-end">
+                                    @produto.PrecoVenda.ToString("C")
+                                </td>
+
+                                <td class="text-center">
+                                    @produto.QuantidadeAtual
+                                </td>
+
+                                <td class="text-center">
+                                    @if (produto.QuantidadeAtual == 0)
+                                    {
+                                        <span class="badge text-bg-danger">
+                                            Sem estoque
+                                        </span>
+                                    }
+                                    else if (
+                                        produto.QuantidadeAtual
+                                        <= produto.EstoqueMinimo
+                                    )
+                                    {
+                                        <span class="badge text-bg-warning">
+                                            Estoque baixo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-success">
+                                            Normal
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-center">
+                                    @if (produto.Ativo)
+                                    {
+                                        <span class="badge text-bg-success">
+                                            Ativo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">
+                                            Inativo
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    <a asp-action="Editar"
+                                       asp-route-id="@produto.ProdutoID"
+                                       class="btn btn-sm
+                                              btn-outline-primary">
+                                        Editar
+                                    </a>
+
+                                    @if (produto.Ativo)
+                                    {
+                                        <form asp-action="AlterarStatus"
+                                              method="post"
+                                              class="d-inline">
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@produto.ProdutoID" />
+
+                                            <input type="hidden"
+                                                   name="ativo"
+                                                   value="false" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm
+                                                           btn-outline-danger">
+                                                Desativar
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="AlterarStatus"
+                                              method="post"
+                                              class="d-inline">
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@produto.ProdutoID" />
+
+                                            <input type="hidden"
+                                                   name="ativo"
+                                                   value="true" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm
+                                                           btn-outline-success">
+                                                Ativar
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>
