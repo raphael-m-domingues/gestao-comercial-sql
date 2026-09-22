@@ -1,0 +1,132 @@
+@model IEnumerable<GestaoComercial.Web.Models.CategoriaViewModel>
+
+@{
+    ViewData["Title"] = "Categorias";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Categorias</h1>
+
+        <p class="text-muted mb-0">
+            Gerenciamento das categorias de produtos.
+        </p>
+    </div>
+
+    <a asp-action="Criar" class="btn btn-dark">
+        Nova categoria
+    </a>
+</div>
+
+@if (TempData["Sucesso"] is not null)
+{
+    <div class="alert alert-success alert-dismissible fade show"
+         role="alert">
+        @TempData["Sucesso"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th class="text-center">Situação</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var categoria in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                @categoria.Nome
+                            </td>
+
+                            <td>
+                                @(categoria.Descricao
+                                    ?? "Sem descrição")
+                            </td>
+
+                            <td class="text-center">
+                                @if (categoria.Ativo)
+                                {
+                                    <span class="badge text-bg-success">
+                                        Ativa
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        Inativa
+                                    </span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <a asp-action="Editar"
+                                   asp-route-id="@categoria.CategoriaID"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Editar
+                                </a>
+
+                                @if (categoria.Ativo)
+                                {
+                                    <form asp-action="AlterarStatus"
+                                          method="post"
+                                          class="d-inline">
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@categoria.CategoriaID" />
+
+                                        <input type="hidden"
+                                               name="ativo"
+                                               value="false" />
+
+                                        <button type="submit"
+                                                class="btn btn-sm
+                                                       btn-outline-danger">
+                                            Desativar
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="AlterarStatus"
+                                          method="post"
+                                          class="d-inline">
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@categoria.CategoriaID" />
+
+                                        <input type="hidden"
+                                               name="ativo"
+                                               value="true" />
+
+                                        <button type="submit"
+                                                class="btn btn-sm
+                                                       btn-outline-success">
+                                            Ativar
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

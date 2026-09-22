@@ -10,10 +10,10 @@ builder.Services.AddSingleton<SqlConnectionFactory>();
 builder.Services.AddScoped<ProdutoRepository>();
 builder.Services.AddScoped<DashboardRepository>();
 builder.Services.AddScoped<EstoqueRepository>();
+builder.Services.AddScoped<CategoriaRepository>();
 
 var app = builder.Build();
 
-// Configura o tratamento de erros fora do ambiente de desenvolvimento.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
