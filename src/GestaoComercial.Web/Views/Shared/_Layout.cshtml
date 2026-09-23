@@ -2,7 +2,8 @@
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
 
     <title>@ViewData["Title"] - Gestão Comercial</title>
 
@@ -23,7 +24,8 @@
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm
-                    navbar-light bg-white border-bottom box-shadow mb-3">
+                    navbar-light bg-white border-bottom
+                    box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand"
                    asp-controller="Home"
@@ -70,6 +72,14 @@
 
                         <li class="nav-item">
                             <a class="nav-link text-dark"
+                               asp-controller="Entradas"
+                               asp-action="Index">
+                                Entradas
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link text-dark"
                                asp-controller="Estoque"
                                asp-action="Index">
                                 Estoque baixo
@@ -106,7 +116,9 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js">
     </script>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/site.js"
+            asp-append-version="true">
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

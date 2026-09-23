@@ -1,6 +1,15 @@
+using System.Globalization;
 using GestaoComercial.Web.Data;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Define a cultura brasileira para valores monetários,
+// números decimais e datas.
+var culturaBrasileira = new CultureInfo("pt-BR");
+
+CultureInfo.DefaultThreadCurrentCulture = culturaBrasileira;
+CultureInfo.DefaultThreadCurrentUICulture = culturaBrasileira;
 
 // Registra os serviços utilizados pela aplicação.
 builder.Services.AddControllersWithViews();
@@ -11,8 +20,24 @@ builder.Services.AddScoped<ProdutoRepository>();
 builder.Services.AddScoped<DashboardRepository>();
 builder.Services.AddScoped<EstoqueRepository>();
 builder.Services.AddScoped<CategoriaRepository>();
+builder.Services.AddScoped<EntradaRepository>();
 
 var app = builder.Build();
+
+var opcoesLocalizacao = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(culturaBrasileira),
+    SupportedCultures = new[]
+    {
+        culturaBrasileira
+    },
+    SupportedUICultures = new[]
+    {
+        culturaBrasileira
+    }
+};
+
+app.UseRequestLocalization(opcoesLocalizacao);
 
 if (!app.Environment.IsDevelopment())
 {

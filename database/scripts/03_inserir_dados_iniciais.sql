@@ -11,15 +11,34 @@ BEGIN TRY
        Perfis
        ===================================================== */
 
-    INSERT INTO dbo.Perfis (Nome, Descricao)
-    SELECT v.Nome, v.Descricao
+    INSERT INTO dbo.Perfis
+    (
+        Nome,
+        Descricao
+    )
+    SELECT
+        v.Nome,
+        v.Descricao
     FROM
     (
         VALUES
-            (N'Administrador', N'Acesso completo ao sistema'),
-            (N'Estoquista',    N'Gerenciamento de produtos e estoque'),
-            (N'Caixa',         N'Registro e consulta de vendas')
-    ) AS v (Nome, Descricao)
+            (
+                N'Administrador',
+                N'Acesso completo ao sistema'
+            ),
+            (
+                N'Estoquista',
+                N'Gerenciamento de produtos e estoque'
+            ),
+            (
+                N'Caixa',
+                N'Registro e consulta de vendas'
+            )
+    ) AS v
+    (
+        Nome,
+        Descricao
+    )
     WHERE NOT EXISTS
     (
         SELECT 1
@@ -28,11 +47,50 @@ BEGIN TRY
     );
 
     /* =====================================================
+       Usuário operacional de demonstração
+       ===================================================== */
+
+    INSERT INTO dbo.Usuarios
+    (
+        PerfilID,
+        Nome,
+        Email,
+        SenhaHash
+    )
+    SELECT
+        p.PerfilID,
+        N'Operador de Estoque',
+        N'estoque@minimercado.local',
+        CONVERT
+        (
+            VARCHAR(64),
+            HASHBYTES
+            (
+                'SHA2_256',
+                N'usuario-demonstracao-sem-autenticacao'
+            ),
+            2
+        )
+    FROM dbo.Perfis AS p
+    WHERE p.Nome = N'Estoquista'
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.Usuarios AS u
+          WHERE u.Email =
+              N'estoque@minimercado.local'
+      );
+
+    /* =====================================================
        Formas de pagamento
        ===================================================== */
 
-    INSERT INTO dbo.FormasPagamento (Nome)
-    SELECT v.Nome
+    INSERT INTO dbo.FormasPagamento
+    (
+        Nome
+    )
+    SELECT
+        v.Nome
     FROM
     (
         VALUES
@@ -40,7 +98,10 @@ BEGIN TRY
             (N'Pix'),
             (N'Cartão de débito'),
             (N'Cartão de crédito')
-    ) AS v (Nome)
+    ) AS v
+    (
+        Nome
+    )
     WHERE NOT EXISTS
     (
         SELECT 1
@@ -52,16 +113,42 @@ BEGIN TRY
        Categorias
        ===================================================== */
 
-    INSERT INTO dbo.Categorias (Nome, Descricao)
-    SELECT v.Nome, v.Descricao
+    INSERT INTO dbo.Categorias
+    (
+        Nome,
+        Descricao
+    )
+    SELECT
+        v.Nome,
+        v.Descricao
     FROM
     (
         VALUES
-            (N'Alimentos', N'Produtos alimentícios em geral'),
-            (N'Bebidas',   N'Bebidas não alcoólicas'),
-            (N'Higiene',   N'Produtos de higiene pessoal'),
-            (N'Limpeza',   N'Produtos para limpeza doméstica')
-    ) AS v (Nome, Descricao)
+            (
+                N'Alimentos',
+                N'Produtos alimentícios em geral'
+            ),
+            (
+                N'Bebidas',
+                N'Bebidas não alcoólicas'
+            ),
+            (
+                N'Higiene',
+                N'Produtos de higiene pessoal'
+            ),
+            (
+                N'Limpeza',
+                N'Produtos para limpeza doméstica'
+            ),
+            (
+                N'Utilidades',
+                N'Utensílios, acessórios e utilidades domésticas'
+            )
+    ) AS v
+    (
+        Nome,
+        Descricao
+    )
     WHERE NOT EXISTS
     (
         SELECT 1
@@ -200,6 +287,14 @@ BEGIN TRY
             CAST(2.80 AS DECIMAL(10,2)),
             CAST(5.49 AS DECIMAL(10,2)),
             8
+        ),
+        (
+            N'Utilidades',
+            N'Papel toalha 2 rolos',
+            N'Pacote de papel toalha com dois rolos',
+            CAST(4.75 AS DECIMAL(10,2)),
+            CAST(8.49 AS DECIMAL(10,2)),
+            8
         )
     ) AS v
     (
@@ -223,8 +318,12 @@ BEGIN TRY
        Registro inicial de estoque
        ===================================================== */
 
-    INSERT INTO dbo.Estoques (ProdutoID)
-    SELECT p.ProdutoID
+    INSERT INTO dbo.Estoques
+    (
+        ProdutoID
+    )
+    SELECT
+        p.ProdutoID
     FROM dbo.Produtos AS p
     WHERE NOT EXISTS
     (
@@ -249,10 +348,50 @@ GO
    Validação
    ========================================================= */
 
-SELECT * FROM dbo.Perfis ORDER BY PerfilID;
-SELECT * FROM dbo.FormasPagamento ORDER BY FormaPagamentoID;
-SELECT * FROM dbo.Categorias ORDER BY CategoriaID;
-SELECT * FROM dbo.Fornecedores ORDER BY FornecedorID;
+SELECT
+    PerfilID,
+    Nome,
+    Descricao,
+    Ativo
+FROM dbo.Perfis
+ORDER BY PerfilID;
+
+SELECT
+    u.UsuarioID,
+    p.Nome AS Perfil,
+    u.Nome AS Usuario,
+    u.Email,
+    u.Ativo,
+    u.CriadoEm
+FROM dbo.Usuarios AS u
+INNER JOIN dbo.Perfis AS p
+    ON p.PerfilID = u.PerfilID
+ORDER BY u.UsuarioID;
+
+SELECT
+    FormaPagamentoID,
+    Nome,
+    Ativo
+FROM dbo.FormasPagamento
+ORDER BY FormaPagamentoID;
+
+SELECT
+    CategoriaID,
+    Nome,
+    Descricao,
+    Ativo
+FROM dbo.Categorias
+ORDER BY CategoriaID;
+
+SELECT
+    FornecedorID,
+    RazaoSocial,
+    NomeFantasia,
+    Telefone,
+    Email,
+    Ativo
+FROM dbo.Fornecedores
+ORDER BY FornecedorID;
 
 SELECT
     p.ProdutoID,
@@ -261,7 +400,8 @@ SELECT
     p.PrecoCusto,
     p.PrecoVenda,
     p.EstoqueMinimo,
-    e.QuantidadeAtual
+    e.QuantidadeAtual,
+    p.Ativo
 FROM dbo.Produtos AS p
 INNER JOIN dbo.Categorias AS c
     ON c.CategoriaID = p.CategoriaID
