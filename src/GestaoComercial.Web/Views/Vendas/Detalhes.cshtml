@@ -1,0 +1,397 @@
+@using System.Globalization
+@model GestaoComercial.Web.Models.VendaDetalhesViewModel
+
+@{
+    ViewData["Title"] = $"Venda #{Model.VendaID}";
+
+    var culturaBrasileira =
+        CultureInfo.GetCultureInfo("pt-BR");
+
+    var vendaAberta =
+        Model.Status == "ABERTA";
+
+    var quantidadeItens =
+        Model.Itens.Count();
+}
+
+@if (TempData["MensagemSucesso"] is not null)
+{
+    <div class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        @TempData["MensagemSucesso"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+@if (TempData["MensagemErro"] is not null)
+{
+    <div class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        @TempData["MensagemErro"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="mb-1">
+                Venda #@Model.VendaID
+            </h1>
+
+            @if (vendaAberta)
+            {
+                <span class="badge text-bg-warning">
+                    Aberta
+                </span>
+            }
+            else
+            {
+                <span class="badge text-bg-success">
+                    Concluída
+                </span>
+            }
+        </div>
+
+        <p class="text-muted mb-0">
+            Registro de produtos e baixa de estoque.
+        </p>
+    </div>
+
+    <a asp-controller="Vendas"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        Voltar
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <span class="text-muted d-block">
+                    Responsável
+                </span>
+
+                <strong>@Model.Usuario</strong>
+            </div>
+
+            <div class="col-md-4 mb-3 mb-md-0">
+                <span class="text-muted d-block">
+                    Forma de pagamento
+                </span>
+
+                <strong>@Model.FormaPagamento</strong>
+            </div>
+
+            <div class="col-md-4">
+                <span class="text-muted d-block">
+                    Data da venda
+                </span>
+
+                <strong>
+                    @Model.DataVenda.ToString(
+                        "dd/MM/yyyy HH:mm",
+                        culturaBrasileira
+                    )
+                </strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (vendaAberta)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <strong>Adicionar produto</strong>
+        </div>
+
+        <div class="card-body">
+            <form asp-controller="Vendas"
+                  asp-action="AdicionarItem"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="VendaID"
+                       value="@Model.VendaID" />
+
+                <div class="row align-items-end">
+                    <div class="col-lg-8 mb-3 mb-lg-0">
+                        <label for="ProdutoID"
+                               class="form-label">
+                            Produto
+                        </label>
+
+                        <select id="ProdutoID"
+                                name="ProdutoID"
+                                asp-items="ViewBag.Produtos"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Selecione um produto
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 mb-3 mb-lg-0">
+                        <label for="Quantidade"
+                               class="form-label">
+                            Quantidade
+                        </label>
+
+                        <input id="Quantidade"
+                               name="Quantidade"
+                               type="number"
+                               min="1"
+                               step="1"
+                               value="1"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="col-lg-2">
+                        <button type="submit"
+                                class="btn btn-dark w-100">
+                            Adicionar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between">
+        <strong>Produtos da venda</strong>
+
+        <span>
+            @quantidadeItens
+            @(quantidadeItens == 1 ? "item" : "itens")
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Produto</th>
+
+                    <th class="text-center">
+                        Quantidade
+                    </th>
+
+                    <th class="text-end">
+                        Preço unitário
+                    </th>
+
+                    <th class="text-end">
+                        Subtotal
+                    </th>
+
+                    @if (vendaAberta)
+                    {
+                        <th class="text-end">
+                            Ações
+                        </th>
+                    }
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (quantidadeItens == 0)
+                {
+                    <tr>
+                        <td colspan="@(vendaAberta ? 5 : 4)"
+                            class="text-center text-muted py-4">
+
+                            Nenhum produto adicionado.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Itens)
+                    {
+                        var formularioAtualizar =
+                            $"atualizar-item-{item.ItemVendaID}";
+
+                        <tr>
+                            <td>
+                                @item.Produto
+                            </td>
+
+                            @if (vendaAberta)
+                            {
+                                <td>
+                                    <input form="@formularioAtualizar"
+                                           name="quantidade"
+                                           type="number"
+                                           min="1"
+                                           step="1"
+                                           value="@item.Quantidade"
+                                           class="form-control text-center"
+                                           required />
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="text-center">
+                                    @item.Quantidade
+                                </td>
+                            }
+
+                            <td class="text-end">
+                                @item.PrecoUnitario.ToString(
+                                    "C",
+                                    culturaBrasileira
+                                )
+                            </td>
+
+                            <td class="text-end">
+                                @item.Subtotal.ToString(
+                                    "C",
+                                    culturaBrasileira
+                                )
+                            </td>
+
+                            @if (vendaAberta)
+                            {
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <form id="@formularioAtualizar"
+                                              asp-controller="Vendas"
+                                              asp-action="AtualizarItem"
+                                              method="post">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="vendaID"
+                                                   value="@Model.VendaID" />
+
+                                            <input type="hidden"
+                                                   name="itemVendaID"
+                                                   value="@item.ItemVendaID" />
+
+                                            <button type="submit"
+                                                    class="btn btn-outline-primary btn-sm">
+                                                Salvar
+                                            </button>
+                                        </form>
+
+                                        <form asp-controller="Vendas"
+                                              asp-action="RemoverItem"
+                                              method="post"
+                                              onsubmit="return confirm('Deseja remover este produto da venda?');">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="vendaID"
+                                                   value="@Model.VendaID" />
+
+                                            <input type="hidden"
+                                                   name="itemVendaID"
+                                                   value="@item.ItemVendaID" />
+
+                                            <button type="submit"
+                                                    class="btn btn-outline-danger btn-sm">
+                                                Remover
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+
+            <tfoot>
+                <tr>
+                    <th colspan="@(vendaAberta ? 3 : 2)"
+                        class="text-end">
+                        Valor total
+                    </th>
+
+                    <th class="text-end">
+                        @Model.ValorTotal.ToString(
+                            "C",
+                            culturaBrasileira
+                        )
+                    </th>
+
+                    @if (vendaAberta)
+                    {
+                        <th></th>
+                    }
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+@if (vendaAberta)
+{
+    <div class="card border-success shadow-sm">
+        <div class="card-body d-flex justify-content-between
+                    align-items-center flex-wrap gap-3">
+
+            <div>
+                <h5 class="mb-1">
+                    Concluir venda
+                </h5>
+
+                <p class="text-muted mb-0">
+                    A conclusão baixará as quantidades do estoque
+                    e registrará as movimentações de saída.
+                </p>
+            </div>
+
+            <form asp-controller="Vendas"
+                  asp-action="Concluir"
+                  method="post"
+                  onsubmit="return confirm('Confirma a conclusão desta venda? Esta operação baixará o estoque.');">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="id"
+                       value="@Model.VendaID" />
+
+                @if (quantidadeItens == 0)
+                {
+                    <button type="submit"
+                            class="btn btn-success"
+                            disabled>
+                        Concluir venda
+                    </button>
+                }
+                else
+                {
+                    <button type="submit"
+                            class="btn btn-success">
+                        Concluir venda
+                    </button>
+                }
+            </form>
+        </div>
+    </div>
+}

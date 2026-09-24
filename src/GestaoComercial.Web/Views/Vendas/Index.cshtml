@@ -1,0 +1,155 @@
+@using System.Globalization
+@model IEnumerable<GestaoComercial.Web.Models.VendaListagemViewModel>
+
+@{
+    ViewData["Title"] = "Vendas";
+
+    var culturaBrasileira =
+        CultureInfo.GetCultureInfo("pt-BR");
+}
+
+@if (TempData["MensagemSucesso"] is not null)
+{
+    <div class="alert alert-success alert-dismissible fade show"
+         role="alert">
+
+        @TempData["MensagemSucesso"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+@if (TempData["MensagemErro"] is not null)
+{
+    <div class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+
+        @TempData["MensagemErro"]
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">
+            Vendas
+        </h1>
+
+        <p class="text-muted mb-0">
+            Registro de vendas e baixas de estoque.
+        </p>
+    </div>
+
+    <a asp-controller="Vendas"
+       asp-action="Criar"
+       class="btn btn-dark">
+        Nova venda
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Número</th>
+                    <th>Responsável</th>
+                    <th>Pagamento</th>
+                    <th>Data</th>
+                    <th class="text-center">Itens</th>
+                    <th class="text-end">Valor total</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8"
+                            class="text-center text-muted py-4">
+                            Nenhuma venda registrada.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var venda in Model)
+                    {
+                        <tr>
+                            <td>
+                                #@venda.VendaID
+                            </td>
+
+                            <td>
+                                @venda.Usuario
+                            </td>
+
+                            <td>
+                                @venda.FormaPagamento
+                            </td>
+
+                            <td>
+                                @venda.DataVenda.ToString(
+                                    "dd/MM/yyyy HH:mm",
+                                    culturaBrasileira
+                                )
+                            </td>
+
+                            <td class="text-center">
+                                @venda.QuantidadeItens
+                            </td>
+
+                            <td class="text-end">
+                                @venda.ValorTotal.ToString(
+                                    "C",
+                                    culturaBrasileira
+                                )
+                            </td>
+
+                            <td class="text-center">
+                                @if (venda.Status == "ABERTA")
+                                {
+                                    <span class="badge text-bg-warning">
+                                        Aberta
+                                    </span>
+                                }
+                                else if (venda.Status == "CONCLUIDA")
+                                {
+                                    <span class="badge text-bg-success">
+                                        Concluída
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        @venda.Status
+                                    </span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <a asp-controller="Vendas"
+                                   asp-action="Detalhes"
+                                   asp-route-id="@venda.VendaID"
+                                   class="btn btn-outline-primary btn-sm">
+                                    Visualizar
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
