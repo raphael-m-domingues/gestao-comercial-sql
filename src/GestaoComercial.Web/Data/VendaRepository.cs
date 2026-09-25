@@ -323,4 +323,24 @@ public sealed class VendaRepository
             commandType: CommandType.StoredProcedure
         );
     }
+
+    public async Task CancelarAsync(int vendaID)
+    {
+        var parametros = new DynamicParameters();
+
+        parametros.Add(
+            "@VendaID",
+            vendaID,
+            DbType.Int32
+        );
+
+        await using var connection =
+            _connectionFactory.CreateConnection();
+
+        await connection.ExecuteAsync(
+            "dbo.usp_CancelarVenda",
+            parametros,
+            commandType: CommandType.StoredProcedure
+        );
+    }
 }

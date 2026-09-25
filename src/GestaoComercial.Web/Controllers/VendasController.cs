@@ -262,6 +262,33 @@ public sealed class VendasController : Controller
         );
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Cancelar(int id)
+    {
+        try
+        {
+            await _vendaRepository.CancelarAsync(id);
+
+            TempData["MensagemSucesso"] =
+                "Venda cancelada e estoque devolvido.";
+        }
+        catch (SqlException exception)
+            when (EhErroDeNegocio(exception))
+        {
+            TempData["MensagemErro"] =
+                ObterMensagemErro(exception);
+        }
+
+        return RedirectToAction(
+            nameof(Detalhes),
+            new
+            {
+                id
+            }
+        );
+    }
+
     private async Task CarregarOpcoesCriacaoAsync(
         int? usuarioSelecionado = null,
         int? formaPagamentoSelecionada = null
@@ -316,7 +343,7 @@ public sealed class VendasController : Controller
         SqlException exception
     )
     {
-        return exception.Number is >= 52001 and <= 52014;
+        return exception.Number is >= 52001 and <= 52016;
     }
 
     private static string ObterMensagemErro(
@@ -366,6 +393,12 @@ public sealed class VendasController : Controller
 
             52014 =>
                 "O item não existe ou a venda não está aberta.",
+
+            52015 =>
+                "A venda não existe ou não está concluída.",
+
+            52016 =>
+                "Um ou mais produtos não possuem registro de estoque.",
 
             _ =>
                 "Não foi possível concluir a operação."
