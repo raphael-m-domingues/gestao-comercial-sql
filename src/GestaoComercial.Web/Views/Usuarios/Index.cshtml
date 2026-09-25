@@ -1,0 +1,194 @@
+@using System.Security.Claims
+@model IEnumerable<GestaoComercial.Web.Models.UsuarioListagemViewModel>
+
+@{
+    ViewData["Title"] = "Usuários";
+
+    var usuarioAtualID =
+        int.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
+            out var id
+        )
+            ? id
+            : 0;
+}
+
+@if (TempData["MensagemSucesso"] is string mensagemSucesso)
+{
+    <div class="alert alert-success alert-dismissible fade show"
+         role="alert">
+        @mensagemSucesso
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+@if (TempData["MensagemErro"] is string mensagemErro)
+{
+    <div class="alert alert-danger alert-dismissible fade show"
+         role="alert">
+        @mensagemErro
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+<div class="d-flex justify-content-between
+            align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">
+            Usuários
+        </h1>
+
+        <p class="text-muted mb-0">
+            Gerenciamento das contas e dos perfis de acesso.
+        </p>
+    </div>
+
+    <a asp-action="Criar"
+       class="btn btn-dark">
+        Novo usuário
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Perfil</th>
+
+                    <th class="text-center">
+                        Situação
+                    </th>
+
+                    <th>Cadastro</th>
+
+                    <th class="text-end">
+                        Ações
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6"
+                            class="text-center text-muted py-4">
+                            Nenhum usuário cadastrado.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var usuario in Model)
+                    {
+                        <tr>
+                            <td>
+                                @usuario.Nome
+
+                                @if (usuario.UsuarioID == usuarioAtualID)
+                                {
+                                    <span class="badge text-bg-info ms-1">
+                                        Você
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @usuario.Email
+                            </td>
+
+                            <td>
+                                @usuario.Perfil
+                            </td>
+
+                            <td class="text-center">
+                                @if (usuario.Ativo)
+                                {
+                                    <span class="badge text-bg-success">
+                                        Ativo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        Inativo
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @usuario.CriadoEm.ToString(
+                                    "dd/MM/yyyy HH:mm"
+                                )
+                            </td>
+
+                            <td class="text-end text-nowrap">
+                                <a asp-action="RedefinirSenha"
+                                   asp-route-id="@usuario.UsuarioID"
+                                   class="btn btn-sm
+                                          btn-outline-primary">
+                                    Redefinir senha
+                                </a>
+
+                                @if (usuario.Ativo)
+                                {
+                                    <form asp-action="AlterarStatus"
+                                          method="post"
+                                          class="d-inline">
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@usuario.UsuarioID" />
+
+                                        <input type="hidden"
+                                               name="ativo"
+                                               value="false" />
+
+                                        <button type="submit"
+                                                class="btn btn-sm
+                                                       btn-outline-danger"
+                                                disabled="@(usuario.UsuarioID == usuarioAtualID)">
+                                            Desativar
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="AlterarStatus"
+                                          method="post"
+                                          class="d-inline">
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@usuario.UsuarioID" />
+
+                                        <input type="hidden"
+                                               name="ativo"
+                                               value="true" />
+
+                                        <button type="submit"
+                                                class="btn btn-sm
+                                                       btn-outline-success">
+                                            Ativar
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

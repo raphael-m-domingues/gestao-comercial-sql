@@ -1,23 +1,27 @@
 using GestaoComercial.Web.Data;
 using GestaoComercial.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 namespace GestaoComercial.Web.Controllers;
 
+[Authorize(Roles = "Administrador,Estoquista")]
 public sealed class CategoriasController : Controller
 {
     private readonly CategoriaRepository _categoriaRepository;
 
     public CategoriasController(
-        CategoriaRepository categoriaRepository)
+        CategoriaRepository categoriaRepository
+    )
     {
         _categoriaRepository = categoriaRepository;
     }
 
     public async Task<IActionResult> Index()
     {
-        var categorias = await _categoriaRepository.ListarAsync();
+        var categorias =
+            await _categoriaRepository.ListarAsync();
 
         return View(categorias);
     }
@@ -31,7 +35,8 @@ public sealed class CategoriasController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(
-        CategoriaViewModel categoria)
+        CategoriaViewModel categoria
+    )
     {
         if (!ModelState.IsValid)
         {
@@ -52,7 +57,8 @@ public sealed class CategoriasController : Controller
         {
             ModelState.AddModelError(
                 nameof(categoria.Nome),
-                "Já existe uma categoria com esse nome.");
+                "Já existe uma categoria com esse nome."
+            );
 
             return View(categoria);
         }
@@ -76,7 +82,8 @@ public sealed class CategoriasController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar(
         int id,
-        CategoriaViewModel categoria)
+        CategoriaViewModel categoria
+    )
     {
         if (id != categoria.CategoriaID)
         {
@@ -91,7 +98,8 @@ public sealed class CategoriasController : Controller
         try
         {
             var atualizada =
-                await _categoriaRepository.AtualizarAsync(categoria);
+                await _categoriaRepository
+                    .AtualizarAsync(categoria);
 
             if (!atualizada)
             {
@@ -108,7 +116,8 @@ public sealed class CategoriasController : Controller
         {
             ModelState.AddModelError(
                 nameof(categoria.Nome),
-                "Já existe uma categoria com esse nome.");
+                "Já existe uma categoria com esse nome."
+            );
 
             return View(categoria);
         }
@@ -118,12 +127,14 @@ public sealed class CategoriasController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AlterarStatus(
         int id,
-        bool ativo)
+        bool ativo
+    )
     {
         var atualizado =
             await _categoriaRepository.AlterarStatusAsync(
                 id,
-                ativo);
+                ativo
+            );
 
         if (!atualizado)
         {

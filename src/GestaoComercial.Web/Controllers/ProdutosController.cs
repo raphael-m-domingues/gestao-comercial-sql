@@ -1,11 +1,13 @@
 using GestaoComercial.Web.Data;
 using GestaoComercial.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
 
 namespace GestaoComercial.Web.Controllers;
 
+[Authorize(Roles = "Administrador,Estoquista,Caixa")]
 public sealed class ProdutosController : Controller
 {
     private readonly ProdutoRepository _produtoRepository;
@@ -27,6 +29,7 @@ public sealed class ProdutosController : Controller
         return View(produtos);
     }
 
+    [Authorize(Roles = "Administrador,Estoquista")]
     [HttpGet]
     public async Task<IActionResult> Criar()
     {
@@ -35,6 +38,7 @@ public sealed class ProdutosController : Controller
         return View(new ProdutoFormularioViewModel());
     }
 
+    [Authorize(Roles = "Administrador,Estoquista")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(
@@ -79,6 +83,7 @@ public sealed class ProdutosController : Controller
         }
     }
 
+    [Authorize(Roles = "Administrador,Estoquista")]
     [HttpGet]
     public async Task<IActionResult> Editar(int id)
     {
@@ -94,6 +99,7 @@ public sealed class ProdutosController : Controller
         return View(produto);
     }
 
+    [Authorize(Roles = "Administrador,Estoquista")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar(
@@ -161,6 +167,7 @@ public sealed class ProdutosController : Controller
         }
     }
 
+    [Authorize(Roles = "Administrador,Estoquista")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AlterarStatus(

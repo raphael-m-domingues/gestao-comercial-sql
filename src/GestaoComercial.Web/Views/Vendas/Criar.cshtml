@@ -4,14 +4,15 @@
     ViewData["Title"] = "Nova venda";
 }
 
-<div class="d-flex justify-content-between align-items-start mb-4">
+<div class="d-flex justify-content-between
+            align-items-start mb-4">
     <div>
         <h1 class="mb-1">
             Nova venda
         </h1>
 
         <p class="text-muted mb-0">
-            Selecione o responsável e a forma de pagamento.
+            Selecione a forma de pagamento.
         </p>
     </div>
 
@@ -34,25 +35,6 @@
                  class="text-danger mb-3">
             </div>
 
-            <div class="mb-3">
-                <label asp-for="UsuarioID"
-                       class="form-label">
-                </label>
-
-                <select asp-for="UsuarioID"
-                        asp-items="ViewBag.Usuarios"
-                        class="form-select">
-
-                    <option value="0">
-                        Selecione um usuário
-                    </option>
-                </select>
-
-                <span asp-validation-for="UsuarioID"
-                      class="text-danger">
-                </span>
-            </div>
-
             <div class="mb-4">
                 <label asp-for="FormaPagamentoID"
                        class="form-label">
@@ -61,7 +43,6 @@
                 <select asp-for="FormaPagamentoID"
                         asp-items="ViewBag.FormasPagamento"
                         class="form-select">
-
                     <option value="0">
                         Selecione uma forma de pagamento
                     </option>
@@ -73,11 +54,17 @@
             </div>
 
             <div class="alert alert-info">
-                A venda será criada com o status
-                <strong>Aberta</strong>.
+                <p class="mb-2">
+                    O responsável será o usuário atualmente
+                    conectado:
+                    <strong>@User.Identity?.Name</strong>.
+                </p>
 
-                Depois será possível adicionar os produtos
-                antes da conclusão.
+                <p class="mb-0">
+                    A venda será criada com o status
+                    <strong>Aberta</strong>. Depois será possível
+                    adicionar os produtos antes da conclusão.
+                </p>
             </div>
 
             <div class="d-flex justify-content-end gap-2">

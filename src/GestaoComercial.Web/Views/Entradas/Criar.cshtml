@@ -12,8 +12,7 @@
                 <h1 class="mb-1">Nova entrada</h1>
 
                 <p class="text-muted mb-0">
-                    Selecione o fornecedor e o responsável
-                    pelo recebimento.
+                    Selecione o fornecedor da mercadoria.
                 </p>
             </div>
 
@@ -25,12 +24,13 @@
 
         <div class="card shadow-sm">
             <div class="card-body">
-                <form asp-action="Criar" method="post">
+                <form asp-action="Criar"
+                      method="post">
                     <div asp-validation-summary="ModelOnly"
                          class="text-danger mb-3">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="FornecedorID"
                                class="form-label">
                         </label>
@@ -48,28 +48,18 @@
                         </span>
                     </div>
 
-                    <div class="mb-4">
-                        <label asp-for="UsuarioID"
-                               class="form-label">
-                        </label>
-
-                        <select asp-for="UsuarioID"
-                                asp-items="ViewBag.Usuarios"
-                                class="form-select">
-                            <option value="">
-                                Selecione um usuário
-                            </option>
-                        </select>
-
-                        <span asp-validation-for="UsuarioID"
-                              class="text-danger">
-                        </span>
-                    </div>
-
                     <div class="alert alert-info">
-                        A entrada será criada com o status
-                        <strong>Aberta</strong>. Depois será possível
-                        adicionar os produtos antes da confirmação.
+                        <p class="mb-2">
+                            O responsável será o usuário atualmente
+                            conectado:
+                            <strong>@User.Identity?.Name</strong>.
+                        </p>
+
+                        <p class="mb-0">
+                            A entrada será criada com o status
+                            <strong>Aberta</strong>. Depois será possível
+                            adicionar os produtos antes da confirmação.
+                        </p>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">

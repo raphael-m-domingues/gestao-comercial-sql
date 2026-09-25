@@ -1,16 +1,21 @@
+using System.Security.Claims;
 using GestaoComercial.Web.Data;
 using GestaoComercial.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
 
 namespace GestaoComercial.Web.Controllers;
 
+[Authorize(Roles = "Administrador,Estoquista")]
 public sealed class EntradasController : Controller
 {
     private readonly EntradaRepository _entradaRepository;
 
-    public EntradasController(EntradaRepository entradaRepository)
+    public EntradasController(
+        EntradaRepository entradaRepository
+    )
     {
         _entradaRepository = entradaRepository;
     }
@@ -26,7 +31,7 @@ public sealed class EntradasController : Controller
     [HttpGet]
     public async Task<IActionResult> Criar()
     {
-        await CarregarOpcoesCriacaoAsync();
+        await CarregarFornecedoresAsync();
 
         return View(new EntradaCriarViewModel());
     }
@@ -37,11 +42,12 @@ public sealed class EntradasController : Controller
         EntradaCriarViewModel entrada
     )
     {
+        entrada.UsuarioID = ObterUsuarioIDAutenticado();
+
         if (!ModelState.IsValid)
         {
-            await CarregarOpcoesCriacaoAsync(
-                entrada.FornecedorID,
-                entrada.UsuarioID
+            await CarregarFornecedoresAsync(
+                entrada.FornecedorID
             );
 
             return View(entrada);
@@ -68,9 +74,8 @@ public sealed class EntradasController : Controller
                 ObterMensagemErro(exception)
             );
 
-            await CarregarOpcoesCriacaoAsync(
-                entrada.FornecedorID,
-                entrada.UsuarioID
+            await CarregarFornecedoresAsync(
+                entrada.FornecedorID
             );
 
             return View(entrada);
@@ -80,7 +85,8 @@ public sealed class EntradasController : Controller
     [HttpGet]
     public async Task<IActionResult> Detalhes(int id)
     {
-        var entrada = await _entradaRepository.ObterPorIdAsync(id);
+        var entrada =
+            await _entradaRepository.ObterPorIdAsync(id);
 
         if (entrada is null)
         {
@@ -246,31 +252,19 @@ public sealed class EntradasController : Controller
         );
     }
 
-    private async Task CarregarOpcoesCriacaoAsync(
-        int? fornecedorSelecionado = null,
-        int? usuarioSelecionado = null
+    private async Task CarregarFornecedoresAsync(
+        int? fornecedorSelecionado = null
     )
     {
         var fornecedores =
             await _entradaRepository
                 .ListarFornecedoresAtivosAsync();
 
-        var usuarios =
-            await _entradaRepository
-                .ListarUsuariosAtivosAsync();
-
         ViewBag.Fornecedores = new SelectList(
             fornecedores,
             nameof(OpcaoSelecaoViewModel.ID),
             nameof(OpcaoSelecaoViewModel.Nome),
             fornecedorSelecionado
-        );
-
-        ViewBag.Usuarios = new SelectList(
-            usuarios,
-            nameof(OpcaoSelecaoViewModel.ID),
-            nameof(OpcaoSelecaoViewModel.Nome),
-            usuarioSelecionado
         );
     }
 
@@ -285,6 +279,21 @@ public sealed class EntradasController : Controller
             nameof(OpcaoSelecaoViewModel.ID),
             nameof(OpcaoSelecaoViewModel.Nome)
         );
+    }
+
+    private int ObterUsuarioIDAutenticado()
+    {
+        var identificador =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(identificador, out var usuarioID))
+        {
+            throw new InvalidOperationException(
+                "Não foi possível identificar o usuário autenticado."
+            );
+        }
+
+        return usuarioID;
     }
 
     private string ObterPrimeiroErroValidacao()
@@ -317,11 +326,14 @@ public sealed class EntradasController : Controller
             50006 => "Produto inexistente ou inativo.",
             50007 => "O produto já foi adicionado à entrada.",
             50008 => "A entrada não existe ou não está aberta.",
-            50009 => "Adicione pelo menos um produto antes de confirmar.",
+            50009 =>
+                "Adicione pelo menos um produto antes de confirmar.",
             50010 => "A quantidade deve ser maior que zero.",
             50011 => "O custo unitário não pode ser negativo.",
-            50012 => "O item não existe ou a entrada não está aberta.",
-            50013 => "O item não existe ou a entrada não está aberta.",
+            50012 =>
+                "O item não existe ou a entrada não está aberta.",
+            50013 =>
+                "O item não existe ou a entrada não está aberta.",
             _ => "Não foi possível concluir a operação."
         };
     }

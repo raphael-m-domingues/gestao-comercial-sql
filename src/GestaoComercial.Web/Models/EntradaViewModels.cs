@@ -29,12 +29,6 @@ public sealed class EntradaCriarViewModel
     )]
     public int FornecedorID { get; set; }
 
-    [Display(Name = "Usuário responsável")]
-    [Range(
-        1,
-        int.MaxValue,
-        ErrorMessage = "Selecione um usuário."
-    )]
     public int UsuarioID { get; set; }
 }
 

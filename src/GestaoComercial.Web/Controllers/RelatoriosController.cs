@@ -1,10 +1,12 @@
 using GestaoComercial.Web.Data;
 using GestaoComercial.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 namespace GestaoComercial.Web.Controllers;
 
+[Authorize(Roles = "Administrador")]
 public sealed class RelatoriosController : Controller
 {
     private readonly RelatorioRepository _relatorioRepository;

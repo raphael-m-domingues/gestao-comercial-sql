@@ -1,11 +1,14 @@
+using System.Security.Claims;
 using GestaoComercial.Web.Data;
 using GestaoComercial.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
 
 namespace GestaoComercial.Web.Controllers;
 
+[Authorize(Roles = "Administrador,Caixa")]
 public sealed class VendasController : Controller
 {
     private readonly VendaRepository _vendaRepository;
@@ -29,7 +32,7 @@ public sealed class VendasController : Controller
     [HttpGet]
     public async Task<IActionResult> Criar()
     {
-        await CarregarOpcoesCriacaoAsync();
+        await CarregarFormasPagamentoAsync();
 
         return View(new VendaCriarViewModel());
     }
@@ -40,10 +43,11 @@ public sealed class VendasController : Controller
         VendaCriarViewModel venda
     )
     {
+        venda.UsuarioID = ObterUsuarioIDAutenticado();
+
         if (!ModelState.IsValid)
         {
-            await CarregarOpcoesCriacaoAsync(
-                venda.UsuarioID,
+            await CarregarFormasPagamentoAsync(
                 venda.FormaPagamentoID
             );
 
@@ -74,8 +78,7 @@ public sealed class VendasController : Controller
                 ObterMensagemErro(exception)
             );
 
-            await CarregarOpcoesCriacaoAsync(
-                venda.UsuarioID,
+            await CarregarFormasPagamentoAsync(
                 venda.FormaPagamentoID
             );
 
@@ -262,6 +265,7 @@ public sealed class VendasController : Controller
         );
     }
 
+    [Authorize(Roles = "Administrador")]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancelar(int id)
@@ -289,25 +293,13 @@ public sealed class VendasController : Controller
         );
     }
 
-    private async Task CarregarOpcoesCriacaoAsync(
-        int? usuarioSelecionado = null,
+    private async Task CarregarFormasPagamentoAsync(
         int? formaPagamentoSelecionada = null
     )
     {
-        var usuarios =
-            await _vendaRepository
-                .ListarUsuariosAtivosAsync();
-
         var formasPagamento =
             await _vendaRepository
                 .ListarFormasPagamentoAtivasAsync();
-
-        ViewBag.Usuarios = new SelectList(
-            usuarios,
-            nameof(OpcaoSelecaoViewModel.ID),
-            nameof(OpcaoSelecaoViewModel.Nome),
-            usuarioSelecionado
-        );
 
         ViewBag.FormasPagamento = new SelectList(
             formasPagamento,
@@ -328,6 +320,21 @@ public sealed class VendasController : Controller
             nameof(OpcaoSelecaoViewModel.ID),
             nameof(OpcaoSelecaoViewModel.Nome)
         );
+    }
+
+    private int ObterUsuarioIDAutenticado()
+    {
+        var identificador =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(identificador, out var usuarioID))
+        {
+            throw new InvalidOperationException(
+                "Não foi possível identificar o usuário autenticado."
+            );
+        }
+
+        return usuarioID;
     }
 
     private string ObterPrimeiroErroValidacao()

@@ -2,6 +2,13 @@
 
 @{
     ViewData["Title"] = "Produtos";
+
+    var podeGerenciar =
+        User.IsInRole("Administrador")
+        || User.IsInRole("Estoquista");
+
+    var quantidadeColunas =
+        podeGerenciar ? 8 : 6;
 }
 
 @if (TempData["MensagemSucesso"] is string mensagem)
@@ -21,17 +28,22 @@
 <div class="d-flex justify-content-between
             align-items-center mb-4">
     <div>
-        <h1 class="mb-1">Produtos</h1>
+        <h1 class="mb-1">
+            Produtos
+        </h1>
 
         <p class="text-muted mb-0">
             Consulta de produtos, preços e quantidades em estoque.
         </p>
     </div>
 
-    <a asp-action="Criar"
-       class="btn btn-dark">
-        Novo produto
-    </a>
+    @if (podeGerenciar)
+    {
+        <a asp-action="Criar"
+           class="btn btn-dark">
+            Novo produto
+        </a>
+    }
 </div>
 
 <div class="card shadow-sm">
@@ -41,25 +53,38 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Produto</th>
+
                         <th>Categoria</th>
-                        <th class="text-end">
-                            Preço de custo
-                        </th>
+
+                        @if (podeGerenciar)
+                        {
+                            <th class="text-end">
+                                Preço de custo
+                            </th>
+                        }
+
                         <th class="text-end">
                             Preço de venda
                         </th>
+
                         <th class="text-center">
                             Estoque
                         </th>
+
                         <th class="text-center">
                             Situação
                         </th>
+
                         <th class="text-center">
                             Cadastro
                         </th>
-                        <th class="text-end">
-                            Ações
-                        </th>
+
+                        @if (podeGerenciar)
+                        {
+                            <th class="text-end">
+                                Ações
+                            </th>
+                        }
                     </tr>
                 </thead>
 
@@ -67,7 +92,7 @@
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="8"
+                            <td colspan="@quantidadeColunas"
                                 class="text-center text-muted py-4">
                                 Nenhum produto cadastrado.
                             </td>
@@ -78,13 +103,20 @@
                         @foreach (var produto in Model)
                         {
                             <tr>
-                                <td>@produto.Nome</td>
-
-                                <td>@produto.Categoria</td>
-
-                                <td class="text-end">
-                                    @produto.PrecoCusto.ToString("C")
+                                <td>
+                                    @produto.Nome
                                 </td>
+
+                                <td>
+                                    @produto.Categoria
+                                </td>
+
+                                @if (podeGerenciar)
+                                {
+                                    <td class="text-end">
+                                        @produto.PrecoCusto.ToString("C")
+                                    </td>
+                                }
 
                                 <td class="text-end">
                                     @produto.PrecoVenda.ToString("C")
@@ -133,55 +165,58 @@
                                     }
                                 </td>
 
-                                <td class="text-end text-nowrap">
-                                    <a asp-action="Editar"
-                                       asp-route-id="@produto.ProdutoID"
-                                       class="btn btn-sm
-                                              btn-outline-primary">
-                                        Editar
-                                    </a>
+                                @if (podeGerenciar)
+                                {
+                                    <td class="text-end text-nowrap">
+                                        <a asp-action="Editar"
+                                           asp-route-id="@produto.ProdutoID"
+                                           class="btn btn-sm
+                                                  btn-outline-primary">
+                                            Editar
+                                        </a>
 
-                                    @if (produto.Ativo)
-                                    {
-                                        <form asp-action="AlterarStatus"
-                                              method="post"
-                                              class="d-inline">
-                                            <input type="hidden"
-                                                   name="id"
-                                                   value="@produto.ProdutoID" />
+                                        @if (produto.Ativo)
+                                        {
+                                            <form asp-action="AlterarStatus"
+                                                  method="post"
+                                                  class="d-inline">
+                                                <input type="hidden"
+                                                       name="id"
+                                                       value="@produto.ProdutoID" />
 
-                                            <input type="hidden"
-                                                   name="ativo"
-                                                   value="false" />
+                                                <input type="hidden"
+                                                       name="ativo"
+                                                       value="false" />
 
-                                            <button type="submit"
-                                                    class="btn btn-sm
-                                                           btn-outline-danger">
-                                                Desativar
-                                            </button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form asp-action="AlterarStatus"
-                                              method="post"
-                                              class="d-inline">
-                                            <input type="hidden"
-                                                   name="id"
-                                                   value="@produto.ProdutoID" />
+                                                <button type="submit"
+                                                        class="btn btn-sm
+                                                               btn-outline-danger">
+                                                    Desativar
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="AlterarStatus"
+                                                  method="post"
+                                                  class="d-inline">
+                                                <input type="hidden"
+                                                       name="id"
+                                                       value="@produto.ProdutoID" />
 
-                                            <input type="hidden"
-                                                   name="ativo"
-                                                   value="true" />
+                                                <input type="hidden"
+                                                       name="ativo"
+                                                       value="true" />
 
-                                            <button type="submit"
-                                                    class="btn btn-sm
-                                                           btn-outline-success">
-                                                Ativar
-                                            </button>
-                                        </form>
-                                    }
-                                </td>
+                                                <button type="submit"
+                                                        class="btn btn-sm
+                                                               btn-outline-success">
+                                                    Ativar
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                }
                             </tr>
                         }
                     }

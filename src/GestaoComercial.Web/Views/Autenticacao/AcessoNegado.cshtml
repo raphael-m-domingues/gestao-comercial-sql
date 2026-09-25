@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Acesso negado";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-lg-7 col-xl-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-body p-4 p-md-5 text-center">
+                <div class="display-4 text-danger mb-3">
+                    &#9888;
+                </div>
+
+                <h1 class="h2 mb-3">
+                    Acesso negado
+                </h1>
+
+                <p class="text-muted mb-4">
+                    Seu perfil não possui permissão para acessar
+                    esta página.
+                </p>
+
+                <div class="d-flex justify-content-center gap-2">
+                    <a asp-controller="Home"
+                       asp-action="Index"
+                       class="btn btn-dark">
+                        Voltar ao início
+                    </a>
+
+                    <form asp-controller="Autenticacao"
+                          asp-action="Sair"
+                          method="post">
+                        <button type="submit"
+                                class="btn btn-outline-secondary">
+                            Sair da conta
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

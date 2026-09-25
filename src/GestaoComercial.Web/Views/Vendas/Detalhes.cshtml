@@ -18,13 +18,15 @@
 
     var quantidadeItens =
         Model.Itens.Count();
+
+    var podeCancelar =
+        User.IsInRole("Administrador");
 }
 
 @if (TempData["MensagemSucesso"] is not null)
 {
     <div class="alert alert-success alert-dismissible fade show"
          role="alert">
-
         @TempData["MensagemSucesso"]
 
         <button type="button"
@@ -39,7 +41,6 @@
 {
     <div class="alert alert-danger alert-dismissible fade show"
          role="alert">
-
         @TempData["MensagemErro"]
 
         <button type="button"
@@ -142,7 +143,6 @@
             <form asp-controller="Vendas"
                   asp-action="AdicionarItem"
                   method="post">
-
                 @Html.AntiForgeryToken()
 
                 <input type="hidden"
@@ -161,7 +161,6 @@
                                 asp-items="ViewBag.Produtos"
                                 class="form-select"
                                 required>
-
                             <option value="">
                                 Selecione um produto
                             </option>
@@ -240,7 +239,6 @@
                     <tr>
                         <td colspan="@(vendaAberta ? 5 : 4)"
                             class="text-center text-muted py-4">
-
                             Nenhum produto adicionado.
                         </td>
                     </tr>
@@ -297,12 +295,10 @@
                                     <div class="d-flex
                                                 justify-content-end
                                                 gap-1">
-
                                         <form id="@formularioAtualizar"
                                               asp-controller="Vendas"
                                               asp-action="AtualizarItem"
                                               method="post">
-
                                             @Html.AntiForgeryToken()
 
                                             <input type="hidden"
@@ -325,7 +321,6 @@
                                               asp-action="RemoverItem"
                                               method="post"
                                               onsubmit="return confirm('Deseja remover este produto da venda?');">
-
                                             @Html.AntiForgeryToken()
 
                                             <input type="hidden"
@@ -382,7 +377,6 @@
                     justify-content-between
                     align-items-center
                     flex-wrap gap-3">
-
             <div>
                 <h5 class="mb-1">
                     Concluir venda
@@ -398,40 +392,28 @@
                   asp-action="Concluir"
                   method="post"
                   onsubmit="return confirm('Confirma a conclusão desta venda? Esta operação baixará o estoque.');">
-
                 @Html.AntiForgeryToken()
 
                 <input type="hidden"
                        name="id"
                        value="@Model.VendaID" />
 
-                @if (quantidadeItens == 0)
-                {
-                    <button type="submit"
-                            class="btn btn-success"
-                            disabled>
-                        Concluir venda
-                    </button>
-                }
-                else
-                {
-                    <button type="submit"
-                            class="btn btn-success">
-                        Concluir venda
-                    </button>
-                }
+                <button type="submit"
+                        class="btn btn-success"
+                        disabled="@(quantidadeItens == 0)">
+                    Concluir venda
+                </button>
             </form>
         </div>
     </div>
 }
-else if (vendaConcluida)
+else if (vendaConcluida && podeCancelar)
 {
     <div class="card border-danger shadow-sm">
         <div class="card-body d-flex
                     justify-content-between
                     align-items-center
                     flex-wrap gap-3">
-
             <div>
                 <h5 class="mb-1">
                     Cancelar venda
@@ -447,7 +429,6 @@ else if (vendaConcluida)
                   asp-action="Cancelar"
                   method="post"
                   onsubmit="return confirm('Confirma o cancelamento desta venda? Os produtos serão devolvidos ao estoque.');">
-
                 @Html.AntiForgeryToken()
 
                 <input type="hidden"
@@ -462,11 +443,19 @@ else if (vendaConcluida)
         </div>
     </div>
 }
+else if (vendaConcluida)
+{
+    <div class="alert alert-success mb-0"
+         role="alert">
+        <strong>Venda concluída.</strong>
+
+        A movimentação de saída foi registrada no estoque.
+    </div>
+}
 else if (vendaCancelada)
 {
     <div class="alert alert-secondary mb-0"
          role="alert">
-
         <strong>Venda cancelada.</strong>
 
         Os produtos desta venda foram devolvidos ao estoque.

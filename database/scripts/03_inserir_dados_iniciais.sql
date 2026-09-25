@@ -47,41 +47,6 @@ BEGIN TRY
     );
 
     /* =====================================================
-       Usuário operacional de demonstração
-       ===================================================== */
-
-    INSERT INTO dbo.Usuarios
-    (
-        PerfilID,
-        Nome,
-        Email,
-        SenhaHash
-    )
-    SELECT
-        p.PerfilID,
-        N'Operador de Estoque',
-        N'estoque@minimercado.local',
-        CONVERT
-        (
-            VARCHAR(64),
-            HASHBYTES
-            (
-                'SHA2_256',
-                N'usuario-demonstracao-sem-autenticacao'
-            ),
-            2
-        )
-    FROM dbo.Perfis AS p
-    WHERE p.Nome = N'Estoquista'
-      AND NOT EXISTS
-      (
-          SELECT 1
-          FROM dbo.Usuarios AS u
-          WHERE u.Email =
-              N'estoque@minimercado.local'
-      );
-
-    /* =====================================================
        Formas de pagamento
        ===================================================== */
 
