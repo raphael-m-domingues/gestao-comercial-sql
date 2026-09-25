@@ -25,6 +25,7 @@ builder.Services.AddScoped<EstoqueRepository>();
 builder.Services.AddScoped<CategoriaRepository>();
 builder.Services.AddScoped<EntradaRepository>();
 builder.Services.AddScoped<VendaRepository>();
+builder.Services.AddScoped<RelatorioRepository>();
 
 var app = builder.Build();
 

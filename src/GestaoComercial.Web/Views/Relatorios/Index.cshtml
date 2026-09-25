@@ -1,0 +1,395 @@
+@model RelatorioGerencialViewModel
+
+@{
+    ViewData["Title"] = "Relatórios gerenciais";
+
+    var vendas = Model.VendasPorPeriodo.ToList();
+    var produtos = Model.ProdutosMaisVendidos.ToList();
+
+    var totalVendas =
+        vendas.Sum(item => item.QuantidadeVendas);
+
+    var totalVendido =
+        vendas.Sum(item => item.TotalVendido);
+
+    var ticketMedioGeral =
+        totalVendas > 0
+            ? totalVendido / totalVendas
+            : 0;
+}
+
+<div class="d-flex justify-content-between
+            align-items-start mb-4">
+    <div>
+        <h1>Relatórios gerenciais</h1>
+
+        <p class="text-muted mb-0">
+            Indicadores de estoque e desempenho das vendas.
+        </p>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <strong>Filtros do período</strong>
+    </div>
+
+    <div class="card-body">
+        <form method="get"
+              asp-controller="Relatorios"
+              asp-action="Index">
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label asp-for="DataInicial"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="DataInicial"
+                           type="date"
+                           class="form-control"
+                           value="@Model.DataInicial.ToString("yyyy-MM-dd")" />
+
+                    <span asp-validation-for="DataInicial"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DataFinal"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="DataFinal"
+                           type="date"
+                           class="form-control"
+                           value="@Model.DataFinal.ToString("yyyy-MM-dd")" />
+
+                    <span asp-validation-for="DataFinal"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="Limite"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="Limite"
+                           type="number"
+                           min="1"
+                           max="100"
+                           class="form-control" />
+
+                    <span asp-validation-for="Limite"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="col-md-2 d-grid">
+                    <button type="submit"
+                            class="btn btn-dark">
+                        Aplicar filtros
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<h2 class="h4 mb-3">Resumo do estoque</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Produtos ativos
+                </span>
+
+                <div class="fs-2 fw-bold">
+                    @Model.ResumoEstoque.TotalProdutosAtivos
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Unidades em estoque
+                </span>
+
+                <div class="fs-2 fw-bold">
+                    @Model.ResumoEstoque.TotalUnidadesEstoque
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Valor pelo custo
+                </span>
+
+                <div class="fs-2 fw-bold">
+                    @(Model.ResumoEstoque.ValorCustoEstoque.ToString("C"))
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Valor potencial de venda
+                </span>
+
+                <div class="fs-2 fw-bold">
+                    @(Model.ResumoEstoque.ValorVendaEstoque.ToString("C"))
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card border-danger shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Produtos sem estoque
+                </span>
+
+                <div class="fs-2 fw-bold text-danger">
+                    @Model.ResumoEstoque.ProdutosSemEstoque
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card border-warning shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Produtos com estoque baixo
+                </span>
+
+                <div class="fs-2 fw-bold text-warning">
+                    @Model.ResumoEstoque.ProdutosEstoqueBaixo
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h4 mb-3">Resumo das vendas no período</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Vendas concluídas
+                </span>
+
+                <div class="fs-2 fw-bold">
+                    @totalVendas
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Total vendido
+                </span>
+
+                <div class="fs-2 fw-bold text-success">
+                    @totalVendido.ToString("C")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <span class="text-muted">
+                    Ticket médio geral
+                </span>
+
+                <div class="fs-2 fw-bold">
+                    @ticketMedioGeral.ToString("C")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex
+                justify-content-between align-items-center">
+        <strong>Vendas por dia</strong>
+
+        <span>
+            @vendas.Count
+            @(vendas.Count == 1 ? "dia" : "dias")
+            com vendas
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Data</th>
+                    <th class="text-end">Quantidade</th>
+                    <th class="text-end">Total vendido</th>
+                    <th class="text-end">Ticket médio</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (vendas.Count == 0)
+                {
+                    <tr>
+                        <td colspan="4"
+                            class="text-center text-muted py-4">
+                            Nenhuma venda concluída no período.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var venda in vendas)
+                    {
+                        <tr>
+                            <td>
+                                @venda.Data.ToString("dd/MM/yyyy")
+                            </td>
+
+                            <td class="text-end">
+                                @venda.QuantidadeVendas
+                            </td>
+
+                            <td class="text-end">
+                                @venda.TotalVendido.ToString("C")
+                            </td>
+
+                            <td class="text-end">
+                                @venda.TicketMedio.ToString("C")
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+
+            @if (vendas.Count > 0)
+            {
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>Total do período</td>
+
+                        <td class="text-end">
+                            @totalVendas
+                        </td>
+
+                        <td class="text-end">
+                            @totalVendido.ToString("C")
+                        </td>
+
+                        <td class="text-end">
+                            @ticketMedioGeral.ToString("C")
+                        </td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex
+                justify-content-between align-items-center">
+        <strong>Produtos mais vendidos</strong>
+
+        <span>
+            Até @Model.Limite produtos
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Posição</th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th class="text-end">
+                        Quantidade vendida
+                    </th>
+                    <th class="text-end">
+                        Total vendido
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (produtos.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5"
+                            class="text-center text-muted py-4">
+                            Nenhum produto vendido no período.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @for (var indice = 0;
+                          indice < produtos.Count;
+                          indice++)
+                    {
+                        var produto = produtos[indice];
+
+                        <tr>
+                            <td>
+                                @(indice + 1)º
+                            </td>
+
+                            <td>
+                                @produto.Produto
+                            </td>
+
+                            <td>
+                                @produto.Categoria
+                            </td>
+
+                            <td class="text-end">
+                                @produto.QuantidadeVendida
+                            </td>
+
+                            <td class="text-end">
+                                @produto.TotalVendido.ToString("C")
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
