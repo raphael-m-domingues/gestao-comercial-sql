@@ -70,6 +70,7 @@ builder.Services.AddScoped<FornecedorRepository>();
 builder.Services.AddScoped<EntradaRepository>();
 builder.Services.AddScoped<VendaRepository>();
 builder.Services.AddScoped<RelatorioRepository>();
+builder.Services.AddScoped<MovimentacaoEstoqueRepository>();
 builder.Services.AddScoped<AutenticacaoRepository>();
 
 // Registra os serviços de autenticação.

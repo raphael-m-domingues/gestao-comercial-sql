@@ -1,0 +1,284 @@
+@model GestaoComercial.Web.Models.MovimentacaoEstoqueFiltroViewModel
+
+@{
+    ViewData["Title"] = "Movimentações de estoque";
+}
+
+<div class="mb-4">
+    <h1 class="mb-1">Movimentações de estoque</h1>
+
+    <p class="text-muted mb-0">
+        Histórico de entradas, saídas, devoluções e ajustes.
+    </p>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <strong>Filtros</strong>
+    </div>
+
+    <div class="card-body">
+        <form asp-action="Index"
+              method="get">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label asp-for="DataInicial"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="DataInicial"
+                           class="form-control" />
+
+                    <span asp-validation-for="DataInicial"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="DataFinal"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="DataFinal"
+                           class="form-control" />
+
+                    <span asp-validation-for="DataFinal"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="ProdutoID"
+                           class="form-label">
+                    </label>
+
+                    <select asp-for="ProdutoID"
+                            asp-items="ViewBag.Produtos"
+                            class="form-select">
+                        <option value="">Todos os produtos</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="Tipo"
+                           class="form-label">
+                    </label>
+
+                    <select asp-for="Tipo"
+                            asp-items="ViewBag.Tipos"
+                            class="form-select">
+                        <option value="">Todos os tipos</option>
+                    </select>
+
+                    <span asp-validation-for="Tipo"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="UsuarioID"
+                           class="form-label">
+                    </label>
+
+                    <select asp-for="UsuarioID"
+                            asp-items="ViewBag.Usuarios"
+                            class="form-select">
+                        <option value="">Todos os usuários</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="Limite"
+                           class="form-label">
+                    </label>
+
+                    <input asp-for="Limite"
+                           class="form-control"
+                           min="1"
+                           max="1000" />
+
+                    <span asp-validation-for="Limite"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="col-md-10 d-flex
+                            align-items-end gap-2">
+                    <button type="submit"
+                            class="btn btn-dark">
+                        Filtrar
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Limpar filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex
+                justify-content-between align-items-center">
+        <strong>Histórico</strong>
+
+        <span>
+            @Model.Movimentacoes.Count
+            @(Model.Movimentacoes.Count == 1
+                ? "movimentação"
+                : "movimentações")
+        </span>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Data e hora</th>
+                        <th>Produto</th>
+                        <th>Tipo</th>
+                        <th class="text-center">
+                            Quantidade
+                        </th>
+                        <th>Responsável</th>
+                        <th>Origem</th>
+                        <th>Observação</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Movimentacoes.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted py-4">
+                                Nenhuma movimentação encontrada.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var movimentacao
+                            in Model.Movimentacoes)
+                        {
+                            var classeTipo =
+                                movimentacao.Tipo switch
+                                {
+                                    "ENTRADA" =>
+                                        "text-bg-success",
+
+                                    "SAIDA" =>
+                                        "text-bg-danger",
+
+                                    "DEVOLUCAO" =>
+                                        "text-bg-info",
+
+                                    "AJUSTE" =>
+                                        "text-bg-warning",
+
+                                    _ =>
+                                        "text-bg-secondary"
+                                };
+
+                            var descricaoTipo =
+                                movimentacao.Tipo switch
+                                {
+                                    "ENTRADA" => "Entrada",
+                                    "SAIDA" => "Saída",
+                                    "DEVOLUCAO" => "Devolução",
+                                    "AJUSTE" => "Ajuste",
+                                    _ => movimentacao.Tipo
+                                };
+
+                            <tr>
+                                <td class="text-nowrap">
+                                    @(movimentacao.DataMovimentacao
+                                        .ToString("dd/MM/yyyy HH:mm"))
+                                </td>
+
+                                <td>
+                                    @movimentacao.Produto
+                                </td>
+
+                                <td>
+                                    <span class="badge @classeTipo">
+                                        @descricaoTipo
+                                    </span>
+                                </td>
+
+                                <td class="text-center">
+                                    @movimentacao.Quantidade
+                                </td>
+
+                                <td>
+                                    @movimentacao.Usuario
+                                </td>
+
+                                <td class="text-nowrap">
+                                    @if (
+                                        movimentacao.OrigemTipo == "ENTRADA"
+                                        && movimentacao.OrigemID.HasValue
+                                    )
+                                    {
+                                        <a asp-controller="Entradas"
+                                           asp-action="Detalhes"
+                                           asp-route-id="@movimentacao.OrigemID">
+                                            Entrada
+                                            #@movimentacao.OrigemID
+                                        </a>
+                                    }
+                                    else if (
+                                        movimentacao.OrigemTipo == "VENDA"
+                                        && movimentacao.OrigemID.HasValue
+                                        && User.IsInRole("Administrador")
+                                    )
+                                    {
+                                        <a asp-controller="Vendas"
+                                           asp-action="Detalhes"
+                                           asp-route-id="@movimentacao.OrigemID">
+                                            Venda
+                                            #@movimentacao.OrigemID
+                                        </a>
+                                    }
+                                    else if (
+                                        movimentacao.OrigemTipo == "VENDA"
+                                        && movimentacao.OrigemID.HasValue
+                                    )
+                                    {
+                                        <span>
+                                            Venda
+                                            #@movimentacao.OrigemID
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            Não informada
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(movimentacao.Observacao
+                                        ?? "Sem observação")
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}

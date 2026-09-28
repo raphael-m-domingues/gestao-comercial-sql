@@ -97,6 +97,14 @@
                                         Estoque baixo
                                     </a>
                                 </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark"
+                                       asp-controller="MovimentacoesEstoque"
+                                       asp-action="Index">
+                                        Movimentações
+                                    </a>
+                                </li>
                             }
 
                             @if (User.IsInRole("Administrador")
