@@ -1,0 +1,148 @@
+@model GestaoComercial.Web.Models.FornecedorViewModel
+
+@{
+    ViewData["Title"] = "Editar fornecedor";
+}
+
+<div class="d-flex justify-content-between
+            align-items-start mb-4">
+    <div>
+        <h1 class="mb-1">Editar fornecedor</h1>
+
+        <p class="text-muted mb-0">
+            Atualize os dados do fornecedor selecionado.
+        </p>
+    </div>
+
+    <a asp-action="Index"
+       class="btn btn-outline-secondary">
+        Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="Editar"
+                      asp-route-id="@Model.FornecedorID"
+                      method="post">
+
+                    <input asp-for="FornecedorID"
+                           type="hidden" />
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RazaoSocial"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="RazaoSocial"
+                               class="form-control"
+                               autocomplete="organization"
+                               maxlength="120" />
+
+                        <span asp-validation-for="RazaoSocial"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NomeFantasia"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="NomeFantasia"
+                               class="form-control"
+                               autocomplete="off"
+                               maxlength="120" />
+
+                        <span asp-validation-for="NomeFantasia"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CNPJ"
+                                   class="form-label">
+                            </label>
+
+                            <input asp-for="CNPJ"
+                                   class="form-control"
+                                   inputmode="numeric"
+                                   autocomplete="off"
+                                   placeholder="00.000.000/0000-00"
+                                   maxlength="18" />
+
+                            <span asp-validation-for="CNPJ"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Telefone"
+                                   class="form-label">
+                            </label>
+
+                            <input asp-for="Telefone"
+                                   class="form-control"
+                                   inputmode="tel"
+                                   autocomplete="tel"
+                                   placeholder="(00) 00000-0000"
+                                   maxlength="20" />
+
+                            <span asp-validation-for="Telefone"
+                                  class="text-danger">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="Email"
+                               class="form-control"
+                               autocomplete="email"
+                               maxlength="150" />
+
+                        <span asp-validation-for="Email"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input asp-for="Ativo"
+                               class="form-check-input" />
+
+                        <label asp-for="Ativo"
+                               class="form-check-label">
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit"
+                                class="btn btn-dark">
+                            Salvar alterações
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,181 @@
+@model IEnumerable<GestaoComercial.Web.Models.FornecedorViewModel>
+
+@{
+    ViewData["Title"] = "Fornecedores";
+}
+
+@if (TempData["MensagemSucesso"] is string mensagem)
+{
+    <div class="alert alert-success alert-dismissible fade show"
+         role="alert">
+        @mensagem
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Fechar">
+        </button>
+    </div>
+}
+
+<div class="d-flex justify-content-between
+            align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Fornecedores</h1>
+
+        <p class="text-muted mb-0">
+            Gerenciamento dos fornecedores de mercadorias.
+        </p>
+    </div>
+
+    <a asp-action="Criar"
+       class="btn btn-dark">
+        Novo fornecedor
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Razão social</th>
+                        <th>Nome fantasia</th>
+                        <th>CNPJ</th>
+                        <th>Contato</th>
+                        <th class="text-center">Situação</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted py-4">
+                                Nenhum fornecedor cadastrado.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var fornecedor in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">
+                                    @fornecedor.RazaoSocial
+                                </td>
+
+                                <td>
+                                    @(fornecedor.NomeFantasia
+                                        ?? "Não informado")
+                                </td>
+
+                                <td class="text-nowrap">
+                                    @fornecedor.CNPJFormatado
+                                </td>
+
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        fornecedor.Telefone))
+                                    {
+                                        <div>
+                                            @fornecedor.Telefone
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        fornecedor.Email))
+                                    {
+                                        <div>
+                                            <a href="mailto:@fornecedor.Email">
+                                                @fornecedor.Email
+                                            </a>
+                                        </div>
+                                    }
+
+                                    @if (string.IsNullOrWhiteSpace(
+                                            fornecedor.Telefone)
+                                        && string.IsNullOrWhiteSpace(
+                                            fornecedor.Email))
+                                    {
+                                        <span class="text-muted">
+                                            Não informado
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-center">
+                                    @if (fornecedor.Ativo)
+                                    {
+                                        <span class="badge text-bg-success">
+                                            Ativo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">
+                                            Inativo
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    <a asp-action="Editar"
+                                       asp-route-id="@fornecedor.FornecedorID"
+                                       class="btn btn-sm
+                                              btn-outline-primary">
+                                        Editar
+                                    </a>
+
+                                    @if (fornecedor.Ativo)
+                                    {
+                                        <form asp-action="AlterarStatus"
+                                              method="post"
+                                              class="d-inline">
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@fornecedor.FornecedorID" />
+
+                                            <input type="hidden"
+                                                   name="ativo"
+                                                   value="false" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm
+                                                           btn-outline-danger">
+                                                Desativar
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="AlterarStatus"
+                                              method="post"
+                                              class="d-inline">
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@fornecedor.FornecedorID" />
+
+                                            <input type="hidden"
+                                                   name="ativo"
+                                                   value="true" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm
+                                                           btn-outline-success">
+                                                Ativar
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
