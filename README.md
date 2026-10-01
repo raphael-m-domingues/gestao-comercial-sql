@@ -63,20 +63,20 @@ O projeto integra um banco de dados SQL Server a uma aplicação web ASP.NET Cor
 
 ### Perfis de acesso
 
-| **Funcionalidade**         | **Administrador** | **Estoquista** | **Caixa** |
-| -------------------------- | ----------------- | -------------- | --------- |
-| Painel de estoque          | Sim               | Sim            | Não       |
-| Consultar produtos         | Sim               | Sim            | Sim       |
-| Gerenciar produtos         | Sim               | Sim            | Não       |
-| Gerenciar categorias       | Sim               | Sim            | Não       |
-| Gerenciar fornecedores     | Sim               | Sim            | Não       |
-| Registrar entradas         | Sim               | Sim            | Não       |
-| Registrar vendas           | Sim               | Não            | Sim       |
-| Cancelar vendas concluídas | Sim               | Não            | Não       |
-| Consultar estoque baixo    | Sim               | Sim            | Não       |
-| Consultar movimentações    | Sim               | Sim            | Não       |
-| Consultar relatórios       | Sim               | Não            | Não       |
-| Gerenciar usuários         | Sim               | Não            | Não       |
+| Funcionalidade | Administrador | Estoquista | Caixa |
+| --- | :---: | :---: | :---: |
+| Painel de estoque | Sim | Sim | Não |
+| Consultar produtos | Sim | Sim | Sim |
+| Gerenciar produtos | Sim | Sim | Não |
+| Gerenciar categorias | Sim | Sim | Não |
+| Gerenciar fornecedores | Sim | Sim | Não |
+| Registrar entradas | Sim | Sim | Não |
+| Registrar vendas | Sim | Não | Sim |
+| Cancelar vendas concluídas | Sim | Não | Não |
+| Consultar estoque baixo | Sim | Sim | Não |
+| Consultar movimentações | Sim | Sim | Não |
+| Consultar relatórios | Sim | Não | Não |
+| Gerenciar usuários | Sim | Não | Não |
 
 ### Gerenciamento de usuários
 
@@ -120,6 +120,12 @@ O projeto integra um banco de dados SQL Server a uma aplicação web ASP.NET Cor
 - Configuração do estoque mínimo.
 - Exibição da quantidade atual em estoque.
 - Identificação visual da situação do estoque.
+- Pesquisa por nome ou código de barras.
+- Filtro por categoria.
+- Filtro por status do cadastro.
+- Filtro pela situação do estoque.
+- Paginação com quantidade configurável de registros por página.
+- Preservação dos filtros durante a navegação entre páginas.
 - Ocultação do preço de custo e das ações administrativas para o Caixa.
 
 ### Fornecedores
@@ -149,6 +155,13 @@ O projeto integra um banco de dados SQL Server a uma aplicação web ASP.NET Cor
 - Aumento automático das quantidades em estoque.
 - Registro das movimentações do tipo `ENTRADA`.
 - Proteção contra o processamento repetido da entrada.
+- Pesquisa pelo número da entrada.
+- Filtro por fornecedor.
+- Filtro por status.
+- Filtro por período.
+- Validação do intervalo de datas.
+- Paginação com quantidade configurável de registros por página.
+- Preservação dos filtros durante a navegação entre páginas.
 
 ### Venda de produtos
 
@@ -166,6 +179,13 @@ O projeto integra um banco de dados SQL Server a uma aplicação web ASP.NET Cor
 - Registro das movimentações do tipo `SAIDA`.
 - Proteção contra estoque negativo.
 - Proteção contra o processamento repetido da venda.
+- Pesquisa pelo número da venda.
+- Filtro por forma de pagamento.
+- Filtro por status.
+- Filtro por período.
+- Validação do intervalo de datas.
+- Paginação com quantidade configurável de registros por página.
+- Preservação dos filtros durante a navegação entre páginas.
 
 ### Cancelamento de vendas
 
@@ -206,13 +226,13 @@ O projeto integra um banco de dados SQL Server a uma aplicação web ASP.NET Cor
 
 ## Principais tabelas
 
-| **Grupo** | **Tabelas**                                                 |
-| --------- | ----------------------------------------------------------- |
-| Acesso    | `Perfis`, `Usuarios`                                        |
+| Grupo | Tabelas |
+| --- | --- |
+| Acesso | `Perfis`, `Usuarios` |
 | Cadastros | `Categorias`, `Produtos`, `Fornecedores`, `FormasPagamento` |
-| Estoque   | `Estoques`, `MovimentacoesEstoque`                          |
-| Entradas  | `Entradas`, `ItensEntrada`                                  |
-| Vendas    | `Vendas`, `ItensVenda`                                      |
+| Estoque | `Estoques`, `MovimentacoesEstoque` |
+| Entradas | `Entradas`, `ItensEntrada` |
+| Vendas | `Vendas`, `ItensVenda` |
 
 ## Objetos programáveis
 
@@ -399,11 +419,27 @@ Acesse no navegador o endereço exibido no terminal.
 A aplicação utiliza a estrutura padrão do ASP.NET Core MVC:
 
 - **Models:** representam os dados utilizados pelas telas.
-- **Views:** apresentam as informações e formulários ao usuário.
+- **Views:** apresentam as informações e os formulários ao usuário.
 - **Controllers:** recebem as requisições e controlam o fluxo da aplicação.
 - **Repositories:** executam consultas e procedures no SQL Server com Dapper.
-- **Services:** executam inicialização e validações relacionadas à autenticação.
+- **Services:** executam a inicialização e as validações relacionadas à autenticação.
 - **SQL Server:** armazena os dados e aplica as principais regras de negócio.
+
+## Validações realizadas
+
+A versão atual foi validada por meio de:
+
+- Compilação completa da solução com `dotnet build`.
+- Verificação de formatação com `git diff --check`.
+- Testes dos fluxos de entrada, venda e cancelamento.
+- Testes de atualização automática do estoque.
+- Testes dos filtros e da paginação de Produtos, Entradas e Vendas.
+- Testes de validação dos períodos informados.
+- Testes do histórico de movimentações de estoque.
+- Testes de autenticação e encerramento de sessão.
+- Testes de autorização dos perfis Administrador, Estoquista e Caixa.
+- Testes de acesso direto a páginas protegidas.
+- Verificação da ocultação de informações e ações conforme o perfil.
 
 ## Documentação
 
@@ -417,7 +453,7 @@ A pasta `docs` contém:
 
 ## Status do projeto
 
-### Concluído
+### Versão 1.0 concluída
 
 - Levantamento de requisitos.
 - Modelagem conceitual.
@@ -438,23 +474,24 @@ A pasta `docs` contém:
 - Fluxo completo de vendas.
 - Cancelamento de vendas e devolução ao estoque.
 - Atualização automática do estoque.
-- Registro do histórico de movimentações.
-- Consulta filtrada das movimentações no banco de dados.
+- Registro e consulta do histórico de movimentações.
 - Telas de relatórios gerenciais.
 - Autenticação por cookie.
 - Gerenciamento de usuários.
 - Autorização por perfis.
 - Revogação da sessão de usuários desativados.
 - Identificação automática do responsável pelas operações.
+- Filtros e paginação nas listagens de Produtos, Entradas e Vendas.
+- Validação final dos fluxos e das permissões de acesso.
 
-### Próximas etapas
+### Melhorias futuras
 
-- Concluir e validar a tela do histórico de movimentações.
-- Adicionar filtros e paginação às demais listagens.
-- Ampliar os testes automatizados da aplicação.
+- Adicionar testes automatizados para os principais fluxos da aplicação.
 - Criar uma API para integração com outros sistemas.
-- Melhorar a observabilidade e o tratamento global de erros.
-- Preparar a aplicação para publicação.
+- Adicionar filtros e paginação às demais listagens.
+- Implementar tratamento global de exceções.
+- Melhorar a observabilidade e o registro de eventos da aplicação.
+- Preparar a aplicação para publicação em um ambiente de produção.
 
 ## Autor
 
