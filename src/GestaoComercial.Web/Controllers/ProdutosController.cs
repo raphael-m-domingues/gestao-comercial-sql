@@ -22,11 +22,31 @@ public sealed class ProdutosController : Controller
         _categoriaRepository = categoriaRepository;
     }
 
-    public async Task<IActionResult> Index()
+    [HttpGet]
+    public async Task<IActionResult> Index(
+        ProdutoConsultaViewModel consulta
+    )
     {
-        var produtos = await _produtoRepository.ListarAsync();
+        NormalizarConsulta(consulta);
 
-        return View(produtos);
+        var resultado =
+            await _produtoRepository.ConsultarAsync(consulta);
+
+        if (resultado.TotalRegistros > 0
+            && resultado.Pagina > resultado.TotalPaginas)
+        {
+            resultado.Pagina = resultado.TotalPaginas;
+
+            resultado =
+                await _produtoRepository
+                    .ConsultarAsync(resultado);
+        }
+
+        await CarregarCategoriasFiltroAsync(
+            resultado.CategoriaID
+        );
+
+        return View(resultado);
     }
 
     [Authorize(Roles = "Administrador,Estoquista")]
@@ -45,7 +65,9 @@ public sealed class ProdutosController : Controller
         ProdutoFormularioViewModel produto
     )
     {
-        if (!await CategoriaPodeSerUtilizadaAsync(produto.CategoriaID))
+        if (!await CategoriaPodeSerUtilizadaAsync(
+                produto.CategoriaID
+            ))
         {
             ModelState.AddModelError(
                 nameof(produto.CategoriaID),
@@ -55,7 +77,9 @@ public sealed class ProdutosController : Controller
 
         if (!ModelState.IsValid)
         {
-            await CarregarCategoriasAsync(produto.CategoriaID);
+            await CarregarCategoriasAsync(
+                produto.CategoriaID
+            );
 
             return View(produto);
         }
@@ -77,7 +101,9 @@ public sealed class ProdutosController : Controller
                 "Já existe um produto com esse código de barras."
             );
 
-            await CarregarCategoriasAsync(produto.CategoriaID);
+            await CarregarCategoriasAsync(
+                produto.CategoriaID
+            );
 
             return View(produto);
         }
@@ -87,14 +113,17 @@ public sealed class ProdutosController : Controller
     [HttpGet]
     public async Task<IActionResult> Editar(int id)
     {
-        var produto = await _produtoRepository.ObterPorIdAsync(id);
+        var produto =
+            await _produtoRepository.ObterPorIdAsync(id);
 
         if (produto is null)
         {
             return NotFound();
         }
 
-        await CarregarCategoriasAsync(produto.CategoriaID);
+        await CarregarCategoriasAsync(
+            produto.CategoriaID
+        );
 
         return View(produto);
     }
@@ -113,7 +142,8 @@ public sealed class ProdutosController : Controller
         }
 
         var produtoAtual =
-            await _produtoRepository.ObterPorIdAsync(produto.ProdutoID);
+            await _produtoRepository
+                .ObterPorIdAsync(produto.ProdutoID);
 
         if (produtoAtual is null)
         {
@@ -133,7 +163,9 @@ public sealed class ProdutosController : Controller
 
         if (!ModelState.IsValid)
         {
-            await CarregarCategoriasAsync(produto.CategoriaID);
+            await CarregarCategoriasAsync(
+                produto.CategoriaID
+            );
 
             return View(produto);
         }
@@ -141,7 +173,8 @@ public sealed class ProdutosController : Controller
         try
         {
             var produtoAtualizado =
-                await _produtoRepository.AtualizarAsync(produto);
+                await _produtoRepository
+                    .AtualizarAsync(produto);
 
             if (!produtoAtualizado)
             {
@@ -161,7 +194,9 @@ public sealed class ProdutosController : Controller
                 "Já existe um produto com esse código de barras."
             );
 
-            await CarregarCategoriasAsync(produto.CategoriaID);
+            await CarregarCategoriasAsync(
+                produto.CategoriaID
+            );
 
             return View(produto);
         }
@@ -172,43 +207,92 @@ public sealed class ProdutosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AlterarStatus(
         int id,
-        bool ativo
+        string? busca,
+        int? categoriaID,
+        string status = "TODOS",
+        string situacaoEstoque = "TODOS",
+        int pagina = 1,
+        int tamanhoPagina = 10
     )
     {
+        var produto =
+            await _produtoRepository.ObterPorIdAsync(id);
+
+        if (produto is null)
+        {
+            return NotFound();
+        }
+
+        var novoStatus = !produto.Ativo;
+
         var produtoAlterado =
-            await _produtoRepository.AlterarStatusAsync(id, ativo);
+            await _produtoRepository
+                .AlterarStatusAsync(id, novoStatus);
 
         if (!produtoAlterado)
         {
             return NotFound();
         }
 
-        TempData["MensagemSucesso"] = ativo
+        TempData["MensagemSucesso"] = novoStatus
             ? "Produto ativado com sucesso."
             : "Produto desativado com sucesso.";
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(
+            nameof(Index),
+            new
+            {
+                busca,
+                categoriaID,
+                status,
+                situacaoEstoque,
+                pagina,
+                tamanhoPagina
+            }
+        );
+    }
+
+    private async Task CarregarCategoriasFiltroAsync(
+        int? categoriaSelecionada
+    )
+    {
+        var categorias =
+            await _categoriaRepository.ListarAsync();
+
+        ViewBag.CategoriasFiltro =
+            new SelectList(
+                categorias,
+                nameof(CategoriaViewModel.CategoriaID),
+                nameof(CategoriaViewModel.Nome),
+                categoriaSelecionada
+            );
     }
 
     private async Task CarregarCategoriasAsync(
         int? categoriaSelecionada = null
     )
     {
-        var categorias = await _categoriaRepository.ListarAsync();
+        var categorias =
+            await _categoriaRepository.ListarAsync();
 
         ViewBag.Categorias = categorias
             .Where(categoria =>
-                categoria.Ativo ||
-                categoria.CategoriaID == categoriaSelecionada
+                categoria.Ativo
+                || categoria.CategoriaID
+                    == categoriaSelecionada
             )
             .Select(categoria => new SelectListItem
             {
-                Value = categoria.CategoriaID.ToString(),
+                Value =
+                    categoria.CategoriaID.ToString(),
+
                 Text = categoria.Ativo
                     ? categoria.Nome
                     : $"{categoria.Nome} (inativa)",
+
                 Selected =
-                    categoria.CategoriaID == categoriaSelecionada
+                    categoria.CategoriaID
+                    == categoriaSelecionada
             })
             .ToList();
     }
@@ -218,14 +302,57 @@ public sealed class ProdutosController : Controller
         int? categoriaAtualID = null
     )
     {
-        var categorias = await _categoriaRepository.ListarAsync();
+        var categorias =
+            await _categoriaRepository.ListarAsync();
 
         return categorias.Any(categoria =>
-            categoria.CategoriaID == categoriaID &&
+            categoria.CategoriaID == categoriaID
+            &&
             (
-                categoria.Ativo ||
-                categoria.CategoriaID == categoriaAtualID
+                categoria.Ativo
+                || categoria.CategoriaID
+                    == categoriaAtualID
             )
         );
+    }
+
+    private static void NormalizarConsulta(
+        ProdutoConsultaViewModel consulta
+    )
+    {
+        consulta.Busca =
+            string.IsNullOrWhiteSpace(consulta.Busca)
+                ? null
+                : consulta.Busca.Trim();
+
+        consulta.Pagina =
+            Math.Max(consulta.Pagina, 1);
+
+        if (consulta.TamanhoPagina
+            is not (10 or 25 or 50))
+        {
+            consulta.TamanhoPagina = 10;
+        }
+
+        consulta.Status =
+            consulta.Status?.Trim().ToUpperInvariant()
+            switch
+            {
+                "ATIVOS" => "ATIVOS",
+                "INATIVOS" => "INATIVOS",
+                _ => "TODOS"
+            };
+
+        consulta.SituacaoEstoque =
+            consulta.SituacaoEstoque?
+                .Trim()
+                .ToUpperInvariant()
+            switch
+            {
+                "SEM_ESTOQUE" => "SEM_ESTOQUE",
+                "ESTOQUE_BAIXO" => "ESTOQUE_BAIXO",
+                "NORMAL" => "NORMAL",
+                _ => "TODOS"
+            };
     }
 }

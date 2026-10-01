@@ -1,4 +1,4 @@
-@model IEnumerable<GestaoComercial.Web.Models.ProdutoListagemViewModel>
+@model GestaoComercial.Web.Models.ProdutoConsultaViewModel
 
 @{
     ViewData["Title"] = "Produtos";
@@ -9,6 +9,15 @@
 
     var quantidadeColunas =
         podeGerenciar ? 8 : 6;
+
+    var paginaInicial =
+        Math.Max(1, Model.Pagina - 2);
+
+    var paginaFinal =
+        Math.Min(
+            Model.TotalPaginas,
+            Model.Pagina + 2
+        );
 }
 
 @if (TempData["MensagemSucesso"] is string mensagem)
@@ -44,6 +53,115 @@
             Novo produto
         </a>
     }
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="Index"
+              method="get">
+            <div class="row g-3">
+                <div class="col-12 col-lg-4">
+                    <label asp-for="Busca"
+                           class="form-label">
+                        Produto ou código de barras
+                    </label>
+
+                    <input asp-for="Busca"
+                           class="form-control"
+                           placeholder="Digite para pesquisar" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="CategoriaID"
+                           class="form-label">
+                        Categoria
+                    </label>
+
+                    <select asp-for="CategoriaID"
+                            asp-items="ViewBag.CategoriasFiltro"
+                            class="form-select">
+                        <option value="">
+                            Todas
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="Status"
+                           class="form-label">
+                        Cadastro
+                    </label>
+
+                    <select asp-for="Status"
+                            class="form-select">
+                        <option value="TODOS">
+                            Todos
+                        </option>
+
+                        <option value="ATIVOS">
+                            Ativos
+                        </option>
+
+                        <option value="INATIVOS">
+                            Inativos
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="SituacaoEstoque"
+                           class="form-label">
+                        Situação do estoque
+                    </label>
+
+                    <select asp-for="SituacaoEstoque"
+                            class="form-select">
+                        <option value="TODOS">
+                            Todas
+                        </option>
+
+                        <option value="SEM_ESTOQUE">
+                            Sem estoque
+                        </option>
+
+                        <option value="ESTOQUE_BAIXO">
+                            Estoque baixo
+                        </option>
+
+                        <option value="NORMAL">
+                            Normal
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="TamanhoPagina"
+                           class="form-label">
+                        Itens por página
+                    </label>
+
+                    <select asp-for="TamanhoPagina"
+                            class="form-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit"
+                            class="btn btn-dark">
+                        Filtrar
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Limpar filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="card shadow-sm">
@@ -89,18 +207,18 @@
                 </thead>
 
                 <tbody>
-                    @if (!Model.Any())
+                    @if (!Model.Produtos.Any())
                     {
                         <tr>
                             <td colspan="@quantidadeColunas"
                                 class="text-center text-muted py-4">
-                                Nenhum produto cadastrado.
+                                Nenhum produto encontrado.
                             </td>
                         </tr>
                     }
                     else
                     {
-                        @foreach (var produto in Model)
+                        @foreach (var produto in Model.Produtos)
                         {
                             <tr>
                                 <td>
@@ -175,46 +293,58 @@
                                             Editar
                                         </a>
 
-                                        @if (produto.Ativo)
-                                        {
-                                            <form asp-action="AlterarStatus"
-                                                  method="post"
-                                                  class="d-inline">
-                                                <input type="hidden"
-                                                       name="id"
-                                                       value="@produto.ProdutoID" />
+                                        <form asp-action="AlterarStatus"
+                                              method="post"
+                                              class="d-inline">
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@produto.ProdutoID" />
 
-                                                <input type="hidden"
-                                                       name="ativo"
-                                                       value="false" />
+                                            <input type="hidden"
+                                                   name="ativo"
+                                                   value="@(!produto.Ativo)" />
 
+                                            <input type="hidden"
+                                                   name="busca"
+                                                   value="@Model.Busca" />
+
+                                            <input type="hidden"
+                                                   name="categoriaID"
+                                                   value="@Model.CategoriaID" />
+
+                                            <input type="hidden"
+                                                   name="status"
+                                                   value="@Model.Status" />
+
+                                            <input type="hidden"
+                                                   name="situacaoEstoque"
+                                                   value="@Model.SituacaoEstoque" />
+
+                                            <input type="hidden"
+                                                   name="pagina"
+                                                   value="@Model.Pagina" />
+
+                                            <input type="hidden"
+                                                   name="tamanhoPagina"
+                                                   value="@Model.TamanhoPagina" />
+
+                                            @if (produto.Ativo)
+                                            {
                                                 <button type="submit"
                                                         class="btn btn-sm
                                                                btn-outline-danger">
                                                     Desativar
                                                 </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <form asp-action="AlterarStatus"
-                                                  method="post"
-                                                  class="d-inline">
-                                                <input type="hidden"
-                                                       name="id"
-                                                       value="@produto.ProdutoID" />
-
-                                                <input type="hidden"
-                                                       name="ativo"
-                                                       value="true" />
-
+                                            }
+                                            else
+                                            {
                                                 <button type="submit"
                                                         class="btn btn-sm
                                                                btn-outline-success">
                                                     Ativar
                                                 </button>
-                                            </form>
-                                        }
+                                            }
+                                        </form>
                                     </td>
                                 }
                             </tr>
@@ -222,6 +352,91 @@
                     }
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="card-footer bg-white">
+        <div class="d-flex flex-column flex-md-row
+                    justify-content-between align-items-md-center
+                    gap-3">
+            <div class="text-muted">
+                @if (Model.TotalRegistros == 0)
+                {
+                    <span>
+                        Nenhum registro encontrado.
+                    </span>
+                }
+                else
+                {
+                    <span>
+                        Exibindo @Model.PrimeiroRegistro
+                        a @Model.UltimoRegistro
+                        de @Model.TotalRegistros produtos.
+                    </span>
+                }
+            </div>
+
+            @if (Model.TotalPaginas > 1)
+            {
+                <nav aria-label="Paginação de produtos">
+                    <ul class="pagination mb-0">
+                        <li class="page-item
+                                   @(Model.Pagina == 1
+                                       ? "disabled"
+                                       : null)">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-busca="@Model.Busca"
+                               asp-route-categoriaID="@Model.CategoriaID"
+                               asp-route-status="@Model.Status"
+                               asp-route-situacaoEstoque="@Model.SituacaoEstoque"
+                               asp-route-pagina="@(Model.Pagina - 1)"
+                               asp-route-tamanhoPagina="@Model.TamanhoPagina">
+                                Anterior
+                            </a>
+                        </li>
+
+                        @for (
+                            var pagina = paginaInicial;
+                            pagina <= paginaFinal;
+                            pagina++
+                        )
+                        {
+                            <li class="page-item
+                                       @(pagina == Model.Pagina
+                                           ? "active"
+                                           : null)">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-busca="@Model.Busca"
+                                   asp-route-categoriaID="@Model.CategoriaID"
+                                   asp-route-status="@Model.Status"
+                                   asp-route-situacaoEstoque="@Model.SituacaoEstoque"
+                                   asp-route-pagina="@pagina"
+                                   asp-route-tamanhoPagina="@Model.TamanhoPagina">
+                                    @pagina
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item
+                                   @(Model.Pagina == Model.TotalPaginas
+                                       ? "disabled"
+                                       : null)">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-busca="@Model.Busca"
+                               asp-route-categoriaID="@Model.CategoriaID"
+                               asp-route-status="@Model.Status"
+                               asp-route-situacaoEstoque="@Model.SituacaoEstoque"
+                               asp-route-pagina="@(Model.Pagina + 1)"
+                               asp-route-tamanhoPagina="@Model.TamanhoPagina">
+                                Próxima
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
         </div>
     </div>
 </div>
