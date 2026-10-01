@@ -21,12 +21,46 @@ public sealed class VendasController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        VendaConsultaViewModel consulta
+    )
     {
-        var vendas =
-            await _vendaRepository.ListarAsync();
+        NormalizarConsulta(consulta);
 
-        return View(vendas);
+        if (consulta.DataInicial.HasValue
+            && consulta.DataFinal.HasValue
+            && consulta.DataInicial > consulta.DataFinal)
+        {
+            ModelState.AddModelError(
+                nameof(consulta.DataInicial),
+                "A data inicial não pode ser posterior à data final."
+            );
+        }
+
+        if (ModelState.IsValid)
+        {
+            consulta =
+                await _vendaRepository
+                    .ConsultarAsync(consulta);
+
+            if (consulta.TotalRegistros > 0
+                && consulta.Pagina
+                    > consulta.TotalPaginas)
+            {
+                consulta.Pagina =
+                    consulta.TotalPaginas;
+
+                consulta =
+                    await _vendaRepository
+                        .ConsultarAsync(consulta);
+            }
+        }
+
+        await CarregarFormasPagamentoFiltroAsync(
+            consulta.FormaPagamentoID
+        );
+
+        return View(consulta);
     }
 
     [HttpGet]
@@ -43,7 +77,8 @@ public sealed class VendasController : Controller
         VendaCriarViewModel venda
     )
     {
-        venda.UsuarioID = ObterUsuarioIDAutenticado();
+        venda.UsuarioID =
+            ObterUsuarioIDAutenticado();
 
         if (!ModelState.IsValid)
         {
@@ -57,7 +92,8 @@ public sealed class VendasController : Controller
         try
         {
             var vendaID =
-                await _vendaRepository.CriarAsync(venda);
+                await _vendaRepository
+                    .CriarAsync(venda);
 
             TempData["MensagemSucesso"] =
                 "Venda criada. Agora adicione os produtos.";
@@ -90,7 +126,8 @@ public sealed class VendasController : Controller
     public async Task<IActionResult> Detalhes(int id)
     {
         var venda =
-            await _vendaRepository.ObterPorIdAsync(id);
+            await _vendaRepository
+                .ObterPorIdAsync(id);
 
         if (venda is null)
         {
@@ -173,10 +210,11 @@ public sealed class VendasController : Controller
 
         try
         {
-            await _vendaRepository.AtualizarItemAsync(
-                itemVendaID,
-                quantidade
-            );
+            await _vendaRepository
+                .AtualizarItemAsync(
+                    itemVendaID,
+                    quantidade
+                );
 
             TempData["MensagemSucesso"] =
                 "Item atualizado com sucesso.";
@@ -207,9 +245,8 @@ public sealed class VendasController : Controller
         try
         {
             var vendaEncontradaID =
-                await _vendaRepository.RemoverItemAsync(
-                    itemVendaID
-                );
+                await _vendaRepository
+                    .RemoverItemAsync(itemVendaID);
 
             TempData["MensagemSucesso"] =
                 "Item removido da venda.";
@@ -244,7 +281,8 @@ public sealed class VendasController : Controller
     {
         try
         {
-            await _vendaRepository.ConcluirAsync(id);
+            await _vendaRepository
+                .ConcluirAsync(id);
 
             TempData["MensagemSucesso"] =
                 "Venda concluída e estoque atualizado.";
@@ -272,7 +310,8 @@ public sealed class VendasController : Controller
     {
         try
         {
-            await _vendaRepository.CancelarAsync(id);
+            await _vendaRepository
+                .CancelarAsync(id);
 
             TempData["MensagemSucesso"] =
                 "Venda cancelada e estoque devolvido.";
@@ -293,6 +332,23 @@ public sealed class VendasController : Controller
         );
     }
 
+    private async Task CarregarFormasPagamentoFiltroAsync(
+        int? formaPagamentoSelecionada
+    )
+    {
+        var formasPagamento =
+            await _vendaRepository
+                .ListarFormasPagamentoAsync();
+
+        ViewBag.FormasPagamentoFiltro =
+            new SelectList(
+                formasPagamento,
+                nameof(OpcaoSelecaoViewModel.ID),
+                nameof(OpcaoSelecaoViewModel.Nome),
+                formaPagamentoSelecionada
+            );
+    }
+
     private async Task CarregarFormasPagamentoAsync(
         int? formaPagamentoSelecionada = null
     )
@@ -301,12 +357,13 @@ public sealed class VendasController : Controller
             await _vendaRepository
                 .ListarFormasPagamentoAtivasAsync();
 
-        ViewBag.FormasPagamento = new SelectList(
-            formasPagamento,
-            nameof(OpcaoSelecaoViewModel.ID),
-            nameof(OpcaoSelecaoViewModel.Nome),
-            formaPagamentoSelecionada
-        );
+        ViewBag.FormasPagamento =
+            new SelectList(
+                formasPagamento,
+                nameof(OpcaoSelecaoViewModel.ID),
+                nameof(OpcaoSelecaoViewModel.Nome),
+                formaPagamentoSelecionada
+            );
     }
 
     private async Task CarregarProdutosAsync()
@@ -315,19 +372,25 @@ public sealed class VendasController : Controller
             await _vendaRepository
                 .ListarProdutosDisponiveisAsync();
 
-        ViewBag.Produtos = new SelectList(
-            produtos,
-            nameof(OpcaoSelecaoViewModel.ID),
-            nameof(OpcaoSelecaoViewModel.Nome)
-        );
+        ViewBag.Produtos =
+            new SelectList(
+                produtos,
+                nameof(OpcaoSelecaoViewModel.ID),
+                nameof(OpcaoSelecaoViewModel.Nome)
+            );
     }
 
     private int ObterUsuarioIDAutenticado()
     {
         var identificador =
-            User.FindFirstValue(ClaimTypes.NameIdentifier);
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
 
-        if (!int.TryParse(identificador, out var usuarioID))
+        if (!int.TryParse(
+                identificador,
+                out var usuarioID
+            ))
         {
             throw new InvalidOperationException(
                 "Não foi possível identificar o usuário autenticado."
@@ -350,7 +413,8 @@ public sealed class VendasController : Controller
         SqlException exception
     )
     {
-        return exception.Number is >= 52001 and <= 52016;
+        return exception.Number
+            is >= 52001 and <= 52016;
     }
 
     private static string ObterMensagemErro(
@@ -410,5 +474,47 @@ public sealed class VendasController : Controller
             _ =>
                 "Não foi possível concluir a operação."
         };
+    }
+
+    private static void NormalizarConsulta(
+        VendaConsultaViewModel consulta
+    )
+    {
+        if (consulta.VendaID <= 0)
+        {
+            consulta.VendaID = null;
+        }
+
+        if (consulta.FormaPagamentoID <= 0)
+        {
+            consulta.FormaPagamentoID = null;
+        }
+
+        consulta.DataInicial =
+            consulta.DataInicial?.Date;
+
+        consulta.DataFinal =
+            consulta.DataFinal?.Date;
+
+        consulta.Pagina =
+            Math.Max(consulta.Pagina, 1);
+
+        if (consulta.TamanhoPagina
+            is not (10 or 25 or 50))
+        {
+            consulta.TamanhoPagina = 10;
+        }
+
+        consulta.Status =
+            consulta.Status?
+                .Trim()
+                .ToUpperInvariant()
+            switch
+            {
+                "ABERTA" => "ABERTA",
+                "CONCLUIDA" => "CONCLUIDA",
+                "CANCELADA" => "CANCELADA",
+                _ => "TODOS"
+            };
     }
 }

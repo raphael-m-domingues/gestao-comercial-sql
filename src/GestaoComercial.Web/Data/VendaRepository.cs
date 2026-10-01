@@ -15,10 +15,41 @@ public sealed class VendaRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IEnumerable<VendaListagemViewModel>>
-        ListarAsync()
+    public async Task<VendaConsultaViewModel> ConsultarAsync(
+        VendaConsultaViewModel consulta
+    )
     {
         const string sql = """
+            SELECT
+                COUNT(*)
+            FROM dbo.Vendas AS v
+            WHERE
+                (
+                    @VendaID IS NULL
+                    OR v.VendaID = @VendaID
+                )
+                AND
+                (
+                    @FormaPagamentoID IS NULL
+                    OR v.FormaPagamentoID = @FormaPagamentoID
+                )
+                AND
+                (
+                    @Status = 'TODOS'
+                    OR v.Status = @Status
+                )
+                AND
+                (
+                    @DataInicial IS NULL
+                    OR v.DataVenda >= @DataInicial
+                )
+                AND
+                (
+                    @DataFinal IS NULL
+                    OR v.DataVenda
+                        < DATEADD(DAY, 1, @DataFinal)
+                );
+
             SELECT
                 v.VendaID,
                 u.Nome AS Usuario,
@@ -26,31 +57,86 @@ public sealed class VendaRepository
                 v.DataVenda,
                 v.Status,
                 v.ValorTotal,
-                COUNT(i.ItemVendaID) AS QuantidadeItens
+                (
+                    SELECT COUNT(*)
+                    FROM dbo.ItensVenda AS iv
+                    WHERE iv.VendaID = v.VendaID
+                ) AS QuantidadeItens
             FROM dbo.Vendas AS v
             INNER JOIN dbo.Usuarios AS u
                 ON u.UsuarioID = v.UsuarioID
             INNER JOIN dbo.FormasPagamento AS fp
                 ON fp.FormaPagamentoID = v.FormaPagamentoID
-            LEFT JOIN dbo.ItensVenda AS i
-                ON i.VendaID = v.VendaID
-            GROUP BY
-                v.VendaID,
-                u.Nome,
-                fp.Nome,
-                v.DataVenda,
-                v.Status,
-                v.ValorTotal
+            WHERE
+                (
+                    @VendaID IS NULL
+                    OR v.VendaID = @VendaID
+                )
+                AND
+                (
+                    @FormaPagamentoID IS NULL
+                    OR v.FormaPagamentoID = @FormaPagamentoID
+                )
+                AND
+                (
+                    @Status = 'TODOS'
+                    OR v.Status = @Status
+                )
+                AND
+                (
+                    @DataInicial IS NULL
+                    OR v.DataVenda >= @DataInicial
+                )
+                AND
+                (
+                    @DataFinal IS NULL
+                    OR v.DataVenda
+                        < DATEADD(DAY, 1, @DataFinal)
+                )
             ORDER BY
                 v.DataVenda DESC,
-                v.VendaID DESC;
+                v.VendaID DESC
+            OFFSET @Deslocamento ROWS
+            FETCH NEXT @TamanhoPagina ROWS ONLY;
             """;
+
+        var parametros = new
+        {
+            consulta.VendaID,
+            consulta.FormaPagamentoID,
+            consulta.Status,
+
+            DataInicial =
+                consulta.DataInicial?.Date,
+
+            DataFinal =
+                consulta.DataFinal?.Date,
+
+            Deslocamento =
+                (consulta.Pagina - 1)
+                * consulta.TamanhoPagina,
+
+            consulta.TamanhoPagina
+        };
 
         await using var connection =
             _connectionFactory.CreateConnection();
 
-        return await connection
-            .QueryAsync<VendaListagemViewModel>(sql);
+        using var resultados =
+            await connection.QueryMultipleAsync(
+                sql,
+                parametros
+            );
+
+        consulta.TotalRegistros =
+            await resultados.ReadSingleAsync<int>();
+
+        consulta.Vendas =
+            (await resultados
+                .ReadAsync<VendaListagemViewModel>())
+            .ToList();
+
+        return consulta;
     }
 
     public async Task<VendaDetalhesViewModel?>
@@ -101,7 +187,9 @@ public sealed class VendaRepository
 
         var venda =
             await resultados
-                .ReadSingleOrDefaultAsync<VendaDetalhesViewModel>();
+                .ReadSingleOrDefaultAsync<
+                    VendaDetalhesViewModel
+                >();
 
         if (venda is null)
         {
@@ -125,6 +213,24 @@ public sealed class VendaRepository
                 Nome
             FROM dbo.Usuarios
             WHERE Ativo = 1
+            ORDER BY Nome;
+            """;
+
+        await using var connection =
+            _connectionFactory.CreateConnection();
+
+        return await connection
+            .QueryAsync<OpcaoSelecaoViewModel>(sql);
+    }
+
+    public async Task<IEnumerable<OpcaoSelecaoViewModel>>
+        ListarFormasPagamentoAsync()
+    {
+        const string sql = """
+            SELECT
+                FormaPagamentoID AS ID,
+                Nome
+            FROM dbo.FormasPagamento
             ORDER BY Nome;
             """;
 
@@ -210,7 +316,8 @@ public sealed class VendaRepository
         await connection.ExecuteAsync(
             "dbo.usp_CriarVenda",
             parametros,
-            commandType: CommandType.StoredProcedure
+            commandType:
+                CommandType.StoredProcedure
         );
 
         return parametros.Get<int>("@VendaID");
@@ -246,7 +353,8 @@ public sealed class VendaRepository
         await connection.ExecuteAsync(
             "dbo.usp_AdicionarItemVenda",
             parametros,
-            commandType: CommandType.StoredProcedure
+            commandType:
+                CommandType.StoredProcedure
         );
     }
 
@@ -275,7 +383,8 @@ public sealed class VendaRepository
         await connection.ExecuteAsync(
             "dbo.usp_AtualizarItemVenda",
             parametros,
-            commandType: CommandType.StoredProcedure
+            commandType:
+                CommandType.StoredProcedure
         );
     }
 
@@ -298,7 +407,8 @@ public sealed class VendaRepository
             await connection.QuerySingleAsync<int>(
                 "dbo.usp_RemoverItemVenda",
                 parametros,
-                commandType: CommandType.StoredProcedure
+                commandType:
+                    CommandType.StoredProcedure
             );
 
         return vendaID;
@@ -320,7 +430,8 @@ public sealed class VendaRepository
         await connection.ExecuteAsync(
             "dbo.usp_ConcluirVenda",
             parametros,
-            commandType: CommandType.StoredProcedure
+            commandType:
+                CommandType.StoredProcedure
         );
     }
 
@@ -340,7 +451,8 @@ public sealed class VendaRepository
         await connection.ExecuteAsync(
             "dbo.usp_CancelarVenda",
             parametros,
-            commandType: CommandType.StoredProcedure
+            commandType:
+                CommandType.StoredProcedure
         );
     }
 }

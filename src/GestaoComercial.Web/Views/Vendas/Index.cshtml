@@ -1,18 +1,34 @@
 @using System.Globalization
-@model IEnumerable<GestaoComercial.Web.Models.VendaListagemViewModel>
+@model GestaoComercial.Web.Models.VendaConsultaViewModel
 
 @{
     ViewData["Title"] = "Vendas";
 
     var culturaBrasileira =
         CultureInfo.GetCultureInfo("pt-BR");
+
+    var paginaInicial =
+        Math.Max(1, Model.Pagina - 2);
+
+    var paginaFinal =
+        Math.Min(
+            Model.TotalPaginas,
+            Model.Pagina + 2
+        );
+
+    var dataInicialRota =
+        Model.DataInicial?
+            .ToString("yyyy-MM-dd");
+
+    var dataFinalRota =
+        Model.DataFinal?
+            .ToString("yyyy-MM-dd");
 }
 
 @if (TempData["MensagemSucesso"] is not null)
 {
     <div class="alert alert-success alert-dismissible fade show"
          role="alert">
-
         @TempData["MensagemSucesso"]
 
         <button type="button"
@@ -27,7 +43,6 @@
 {
     <div class="alert alert-danger alert-dismissible fade show"
          role="alert">
-
         @TempData["MensagemErro"]
 
         <button type="button"
@@ -38,7 +53,8 @@
     </div>
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between
+            align-items-center mb-4">
     <div>
         <h1 class="mb-1">
             Vendas
@@ -56,6 +72,123 @@
     </a>
 </div>
 
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="Index"
+              method="get">
+            <div asp-validation-summary="All"
+                 class="text-danger mb-3">
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="VendaID"
+                           class="form-label">
+                        Número
+                    </label>
+
+                    <input asp-for="VendaID"
+                           type="number"
+                           min="1"
+                           class="form-control"
+                           placeholder="Ex.: 1001" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label asp-for="FormaPagamentoID"
+                           class="form-label">
+                        Forma de pagamento
+                    </label>
+
+                    <select asp-for="FormaPagamentoID"
+                            asp-items="ViewBag.FormasPagamentoFiltro"
+                            class="form-select">
+                        <option value="">
+                            Todas
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="Status"
+                           class="form-label">
+                        Status
+                    </label>
+
+                    <select asp-for="Status"
+                            class="form-select">
+                        <option value="TODOS">
+                            Todos
+                        </option>
+
+                        <option value="ABERTA">
+                            Aberta
+                        </option>
+
+                        <option value="CONCLUIDA">
+                            Concluída
+                        </option>
+
+                        <option value="CANCELADA">
+                            Cancelada
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="DataInicial"
+                           class="form-label">
+                        Data inicial
+                    </label>
+
+                    <input asp-for="DataInicial"
+                           asp-format="{0:yyyy-MM-dd}"
+                           type="date"
+                           class="form-control" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label asp-for="DataFinal"
+                           class="form-label">
+                        Data final
+                    </label>
+
+                    <input asp-for="DataFinal"
+                           asp-format="{0:yyyy-MM-dd}"
+                           type="date"
+                           class="form-control" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-1">
+                    <label asp-for="TamanhoPagina"
+                           class="form-label">
+                        Itens
+                    </label>
+
+                    <select asp-for="TamanhoPagina"
+                            class="form-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit"
+                            class="btn btn-dark">
+                        Filtrar
+                    </button>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Limpar filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -65,26 +198,38 @@
                     <th>Responsável</th>
                     <th>Pagamento</th>
                     <th>Data</th>
-                    <th class="text-center">Itens</th>
-                    <th class="text-end">Valor total</th>
-                    <th class="text-center">Status</th>
-                    <th class="text-end">Ações</th>
+
+                    <th class="text-center">
+                        Itens
+                    </th>
+
+                    <th class="text-end">
+                        Valor total
+                    </th>
+
+                    <th class="text-center">
+                        Status
+                    </th>
+
+                    <th class="text-end">
+                        Ações
+                    </th>
                 </tr>
             </thead>
 
             <tbody>
-                @if (!Model.Any())
+                @if (!Model.Vendas.Any())
                 {
                     <tr>
                         <td colspan="8"
                             class="text-center text-muted py-4">
-                            Nenhuma venda registrada.
+                            Nenhuma venda encontrada.
                         </td>
                     </tr>
                 }
                 else
                 {
-                    @foreach (var venda in Model)
+                    @foreach (var venda in Model.Vendas)
                     {
                         <tr>
                             <td>
@@ -100,9 +245,11 @@
                             </td>
 
                             <td>
-                                @venda.DataVenda.ToString(
-                                    "dd/MM/yyyy HH:mm",
-                                    culturaBrasileira
+                                @(
+                                    venda.DataVenda.ToString(
+                                        "dd/MM/yyyy HH:mm",
+                                        culturaBrasileira
+                                    )
                                 )
                             </td>
 
@@ -124,7 +271,9 @@
                                         Aberta
                                     </span>
                                 }
-                                else if (venda.Status == "CONCLUIDA")
+                                else if (
+                                    venda.Status == "CONCLUIDA"
+                                )
                                 {
                                     <span class="badge text-bg-success">
                                         Concluída
@@ -133,7 +282,7 @@
                                 else
                                 {
                                     <span class="badge text-bg-secondary">
-                                        @venda.Status
+                                        Cancelada
                                     </span>
                                 }
                             </td>
@@ -142,7 +291,8 @@
                                 <a asp-controller="Vendas"
                                    asp-action="Detalhes"
                                    asp-route-id="@venda.VendaID"
-                                   class="btn btn-outline-primary btn-sm">
+                                   class="btn btn-sm
+                                          btn-outline-primary">
                                     Visualizar
                                 </a>
                             </td>
@@ -151,5 +301,93 @@
                 }
             </tbody>
         </table>
+    </div>
+
+    <div class="card-footer bg-white">
+        <div class="d-flex flex-column flex-md-row
+                    justify-content-between align-items-md-center
+                    gap-3">
+            <div class="text-muted">
+                @if (Model.TotalRegistros == 0)
+                {
+                    <span>
+                        Nenhum registro encontrado.
+                    </span>
+                }
+                else
+                {
+                    <span>
+                        Exibindo @Model.PrimeiroRegistro
+                        a @Model.UltimoRegistro
+                        de @Model.TotalRegistros vendas.
+                    </span>
+                }
+            </div>
+
+            @if (Model.TotalPaginas > 1)
+            {
+                <nav aria-label="Paginação de vendas">
+                    <ul class="pagination mb-0">
+                        <li class="page-item
+                                   @(Model.Pagina == 1
+                                       ? "disabled"
+                                       : null)">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-vendaID="@Model.VendaID"
+                               asp-route-formaPagamentoID="@Model.FormaPagamentoID"
+                               asp-route-status="@Model.Status"
+                               asp-route-dataInicial="@dataInicialRota"
+                               asp-route-dataFinal="@dataFinalRota"
+                               asp-route-pagina="@(Model.Pagina - 1)"
+                               asp-route-tamanhoPagina="@Model.TamanhoPagina">
+                                Anterior
+                            </a>
+                        </li>
+
+                        @for (
+                            var pagina = paginaInicial;
+                            pagina <= paginaFinal;
+                            pagina++
+                        )
+                        {
+                            <li class="page-item
+                                       @(pagina == Model.Pagina
+                                           ? "active"
+                                           : null)">
+                                <a class="page-link"
+                                   asp-action="Index"
+                                   asp-route-vendaID="@Model.VendaID"
+                                   asp-route-formaPagamentoID="@Model.FormaPagamentoID"
+                                   asp-route-status="@Model.Status"
+                                   asp-route-dataInicial="@dataInicialRota"
+                                   asp-route-dataFinal="@dataFinalRota"
+                                   asp-route-pagina="@pagina"
+                                   asp-route-tamanhoPagina="@Model.TamanhoPagina">
+                                    @pagina
+                                </a>
+                            </li>
+                        }
+
+                        <li class="page-item
+                                   @(Model.Pagina == Model.TotalPaginas
+                                       ? "disabled"
+                                       : null)">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-vendaID="@Model.VendaID"
+                               asp-route-formaPagamentoID="@Model.FormaPagamentoID"
+                               asp-route-status="@Model.Status"
+                               asp-route-dataInicial="@dataInicialRota"
+                               asp-route-dataFinal="@dataFinalRota"
+                               asp-route-pagina="@(Model.Pagina + 1)"
+                               asp-route-tamanhoPagina="@Model.TamanhoPagina">
+                                Próxima
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
     </div>
 </div>
