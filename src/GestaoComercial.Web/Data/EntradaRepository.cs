@@ -8,15 +8,48 @@ public sealed class EntradaRepository
 {
     private readonly SqlConnectionFactory _connectionFactory;
 
-    public EntradaRepository(SqlConnectionFactory connectionFactory)
+    public EntradaRepository(
+        SqlConnectionFactory connectionFactory
+    )
     {
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IEnumerable<EntradaListagemViewModel>>
-        ListarAsync()
+    public async Task<EntradaConsultaViewModel> ConsultarAsync(
+        EntradaConsultaViewModel consulta
+    )
     {
         const string sql = """
+            SELECT
+                COUNT(*)
+            FROM dbo.Entradas AS e
+            WHERE
+                (
+                    @EntradaID IS NULL
+                    OR e.EntradaID = @EntradaID
+                )
+                AND
+                (
+                    @FornecedorID IS NULL
+                    OR e.FornecedorID = @FornecedorID
+                )
+                AND
+                (
+                    @Status = 'TODOS'
+                    OR e.Status = @Status
+                )
+                AND
+                (
+                    @DataInicial IS NULL
+                    OR e.DataEntrada >= @DataInicial
+                )
+                AND
+                (
+                    @DataFinal IS NULL
+                    OR e.DataEntrada
+                        < DATEADD(DAY, 1, @DataFinal)
+                );
+
             SELECT
                 e.EntradaID,
                 COALESCE(
@@ -27,30 +60,85 @@ public sealed class EntradaRepository
                 e.DataEntrada,
                 e.Status,
                 e.ValorTotal,
-                COUNT(ie.ItemEntradaID) AS QuantidadeItens
-            FROM Entradas AS e
-            INNER JOIN Fornecedores AS f
+                (
+                    SELECT COUNT(*)
+                    FROM dbo.ItensEntrada AS ie
+                    WHERE ie.EntradaID = e.EntradaID
+                ) AS QuantidadeItens
+            FROM dbo.Entradas AS e
+            INNER JOIN dbo.Fornecedores AS f
                 ON f.FornecedorID = e.FornecedorID
-            INNER JOIN Usuarios AS u
+            INNER JOIN dbo.Usuarios AS u
                 ON u.UsuarioID = e.UsuarioID
-            LEFT JOIN ItensEntrada AS ie
-                ON ie.EntradaID = e.EntradaID
-            GROUP BY
-                e.EntradaID,
-                f.NomeFantasia,
-                f.RazaoSocial,
-                u.Nome,
-                e.DataEntrada,
-                e.Status,
-                e.ValorTotal
-            ORDER BY e.EntradaID DESC;
+            WHERE
+                (
+                    @EntradaID IS NULL
+                    OR e.EntradaID = @EntradaID
+                )
+                AND
+                (
+                    @FornecedorID IS NULL
+                    OR e.FornecedorID = @FornecedorID
+                )
+                AND
+                (
+                    @Status = 'TODOS'
+                    OR e.Status = @Status
+                )
+                AND
+                (
+                    @DataInicial IS NULL
+                    OR e.DataEntrada >= @DataInicial
+                )
+                AND
+                (
+                    @DataFinal IS NULL
+                    OR e.DataEntrada
+                        < DATEADD(DAY, 1, @DataFinal)
+                )
+            ORDER BY
+                e.EntradaID DESC
+            OFFSET @Deslocamento ROWS
+            FETCH NEXT @TamanhoPagina ROWS ONLY;
             """;
+
+        var parametros = new
+        {
+            consulta.EntradaID,
+            consulta.FornecedorID,
+            consulta.Status,
+
+            DataInicial =
+                consulta.DataInicial?.Date,
+
+            DataFinal =
+                consulta.DataFinal?.Date,
+
+            Deslocamento =
+                (consulta.Pagina - 1)
+                * consulta.TamanhoPagina,
+
+            consulta.TamanhoPagina
+        };
 
         await using var connection =
             _connectionFactory.CreateConnection();
 
-        return await connection
-            .QueryAsync<EntradaListagemViewModel>(sql);
+        using var resultados =
+            await connection.QueryMultipleAsync(
+                sql,
+                parametros
+            );
+
+        consulta.TotalRegistros =
+            await resultados.ReadSingleAsync<int>();
+
+        consulta.Entradas =
+            (await resultados
+                .ReadAsync<EntradaListagemViewModel>())
+            .ToList();
+
+        return consulta;
     }
 
     public async Task<EntradaDetalhesViewModel?> ObterPorIdAsync(
@@ -70,10 +158,10 @@ public sealed class EntradaRepository
                 e.DataEntrada,
                 e.Status,
                 e.ValorTotal
-            FROM Entradas AS e
-            INNER JOIN Fornecedores AS f
+            FROM dbo.Entradas AS e
+            INNER JOIN dbo.Fornecedores AS f
                 ON f.FornecedorID = e.FornecedorID
-            INNER JOIN Usuarios AS u
+            INNER JOIN dbo.Usuarios AS u
                 ON u.UsuarioID = e.UsuarioID
             WHERE e.EntradaID = @EntradaID;
 
@@ -84,8 +172,8 @@ public sealed class EntradaRepository
                 ie.Quantidade,
                 ie.CustoUnitario,
                 ie.Subtotal
-            FROM ItensEntrada AS ie
-            INNER JOIN Produtos AS p
+            FROM dbo.ItensEntrada AS ie
+            INNER JOIN dbo.Produtos AS p
                 ON p.ProdutoID = ie.ProdutoID
             WHERE ie.EntradaID = @EntradaID
             ORDER BY p.Nome;
@@ -94,16 +182,24 @@ public sealed class EntradaRepository
         await using var connection =
             _connectionFactory.CreateConnection();
 
-        using var resultado = await connection.QueryMultipleAsync(
-            sql,
-            new { EntradaID = entradaID }
-        );
+        using var resultado =
+            await connection.QueryMultipleAsync(
+                sql,
+                new
+                {
+                    EntradaID = entradaID
+                }
+            );
 
-        var entrada = await resultado
-            .ReadSingleOrDefaultAsync<EntradaDetalhesViewModel>();
+        var entrada =
+            await resultado
+                .ReadSingleOrDefaultAsync<
+                    EntradaDetalhesViewModel
+                >();
 
-        var itens = await resultado
-            .ReadAsync<ItemEntradaViewModel>();
+        var itens =
+            await resultado
+                .ReadAsync<ItemEntradaViewModel>();
 
         if (entrada is not null)
         {
@@ -111,6 +207,27 @@ public sealed class EntradaRepository
         }
 
         return entrada;
+    }
+
+    public async Task<IEnumerable<OpcaoSelecaoViewModel>>
+        ListarFornecedoresAsync()
+    {
+        const string sql = """
+            SELECT
+                FornecedorID AS ID,
+                COALESCE(
+                    NULLIF(NomeFantasia, ''),
+                    RazaoSocial
+                ) AS Nome
+            FROM dbo.Fornecedores
+            ORDER BY Nome;
+            """;
+
+        await using var connection =
+            _connectionFactory.CreateConnection();
+
+        return await connection
+            .QueryAsync<OpcaoSelecaoViewModel>(sql);
     }
 
     public async Task<IEnumerable<OpcaoSelecaoViewModel>>
@@ -123,7 +240,7 @@ public sealed class EntradaRepository
                     NULLIF(NomeFantasia, ''),
                     RazaoSocial
                 ) AS Nome
-            FROM Fornecedores
+            FROM dbo.Fornecedores
             WHERE Ativo = 1
             ORDER BY Nome;
             """;
@@ -142,7 +259,7 @@ public sealed class EntradaRepository
             SELECT
                 UsuarioID AS ID,
                 Nome
-            FROM Usuarios
+            FROM dbo.Usuarios
             WHERE Ativo = 1
             ORDER BY Nome;
             """;
@@ -161,7 +278,7 @@ public sealed class EntradaRepository
             SELECT
                 ProdutoID AS ID,
                 Nome
-            FROM Produtos
+            FROM dbo.Produtos
             WHERE Ativo = 1
             ORDER BY Nome;
             """;
@@ -201,11 +318,13 @@ public sealed class EntradaRepository
             _connectionFactory.CreateConnection();
 
         var entradaCriada =
-            await connection.QuerySingleAsync<EntradaDetalhesViewModel>(
-                "dbo.usp_CriarEntrada",
-                parametros,
-                commandType: CommandType.StoredProcedure
-            );
+            await connection
+                .QuerySingleAsync<EntradaDetalhesViewModel>(
+                    "dbo.usp_CriarEntrada",
+                    parametros,
+                    commandType:
+                        CommandType.StoredProcedure
+                );
 
         return entradaCriada.EntradaID;
     }
@@ -225,11 +344,13 @@ public sealed class EntradaRepository
         await using var connection =
             _connectionFactory.CreateConnection();
 
-        await connection.QuerySingleAsync<ItemEntradaViewModel>(
-            "dbo.usp_AdicionarItemEntrada",
-            parametros,
-            commandType: CommandType.StoredProcedure
-        );
+        await connection
+            .QuerySingleAsync<ItemEntradaViewModel>(
+                "dbo.usp_AdicionarItemEntrada",
+                parametros,
+                commandType:
+                    CommandType.StoredProcedure
+            );
     }
 
     public async Task AtualizarItemAsync(
@@ -248,22 +369,30 @@ public sealed class EntradaRepository
         await using var connection =
             _connectionFactory.CreateConnection();
 
-        await connection.QuerySingleAsync<ItemEntradaViewModel>(
-            "dbo.usp_AtualizarItemEntrada",
-            parametros,
-            commandType: CommandType.StoredProcedure
-        );
+        await connection
+            .QuerySingleAsync<ItemEntradaViewModel>(
+                "dbo.usp_AtualizarItemEntrada",
+                parametros,
+                commandType:
+                    CommandType.StoredProcedure
+            );
     }
 
-    public async Task<int> RemoverItemAsync(int itemEntradaID)
+    public async Task<int> RemoverItemAsync(
+        int itemEntradaID
+    )
     {
         await using var connection =
             _connectionFactory.CreateConnection();
 
         return await connection.QuerySingleAsync<int>(
             "dbo.usp_RemoverItemEntrada",
-            new { ItemEntradaID = itemEntradaID },
-            commandType: CommandType.StoredProcedure
+            new
+            {
+                ItemEntradaID = itemEntradaID
+            },
+            commandType:
+                CommandType.StoredProcedure
         );
     }
 
@@ -272,10 +401,15 @@ public sealed class EntradaRepository
         await using var connection =
             _connectionFactory.CreateConnection();
 
-        await connection.QuerySingleAsync<EntradaDetalhesViewModel>(
-            "dbo.usp_ConfirmarEntrada",
-            new { EntradaID = entradaID },
-            commandType: CommandType.StoredProcedure
-        );
+        await connection
+            .QuerySingleAsync<EntradaDetalhesViewModel>(
+                "dbo.usp_ConfirmarEntrada",
+                new
+                {
+                    EntradaID = entradaID
+                },
+                commandType:
+                    CommandType.StoredProcedure
+            );
     }
 }

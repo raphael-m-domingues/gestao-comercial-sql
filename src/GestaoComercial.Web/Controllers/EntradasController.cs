@@ -21,11 +21,46 @@ public sealed class EntradasController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(
+        EntradaConsultaViewModel consulta
+    )
     {
-        var entradas = await _entradaRepository.ListarAsync();
+        NormalizarConsulta(consulta);
 
-        return View(entradas);
+        if (consulta.DataInicial.HasValue
+            && consulta.DataFinal.HasValue
+            && consulta.DataInicial > consulta.DataFinal)
+        {
+            ModelState.AddModelError(
+                nameof(consulta.DataInicial),
+                "A data inicial não pode ser posterior à data final."
+            );
+        }
+
+        if (ModelState.IsValid)
+        {
+            consulta =
+                await _entradaRepository
+                    .ConsultarAsync(consulta);
+
+            if (consulta.TotalRegistros > 0
+                && consulta.Pagina
+                    > consulta.TotalPaginas)
+            {
+                consulta.Pagina =
+                    consulta.TotalPaginas;
+
+                consulta =
+                    await _entradaRepository
+                        .ConsultarAsync(consulta);
+            }
+        }
+
+        await CarregarFornecedoresFiltroAsync(
+            consulta.FornecedorID
+        );
+
+        return View(consulta);
     }
 
     [HttpGet]
@@ -42,7 +77,8 @@ public sealed class EntradasController : Controller
         EntradaCriarViewModel entrada
     )
     {
-        entrada.UsuarioID = ObterUsuarioIDAutenticado();
+        entrada.UsuarioID =
+            ObterUsuarioIDAutenticado();
 
         if (!ModelState.IsValid)
         {
@@ -56,14 +92,18 @@ public sealed class EntradasController : Controller
         try
         {
             var entradaID =
-                await _entradaRepository.CriarAsync(entrada);
+                await _entradaRepository
+                    .CriarAsync(entrada);
 
             TempData["MensagemSucesso"] =
                 "Entrada criada. Agora adicione os produtos.";
 
             return RedirectToAction(
                 nameof(Detalhes),
-                new { id = entradaID }
+                new
+                {
+                    id = entradaID
+                }
             );
         }
         catch (SqlException exception)
@@ -86,7 +126,8 @@ public sealed class EntradasController : Controller
     public async Task<IActionResult> Detalhes(int id)
     {
         var entrada =
-            await _entradaRepository.ObterPorIdAsync(id);
+            await _entradaRepository
+                .ObterPorIdAsync(id);
 
         if (entrada is null)
         {
@@ -114,13 +155,17 @@ public sealed class EntradasController : Controller
 
             return RedirectToAction(
                 nameof(Detalhes),
-                new { id = item.EntradaID }
+                new
+                {
+                    id = item.EntradaID
+                }
             );
         }
 
         try
         {
-            await _entradaRepository.AdicionarItemAsync(item);
+            await _entradaRepository
+                .AdicionarItemAsync(item);
 
             TempData["MensagemSucesso"] =
                 "Produto adicionado à entrada.";
@@ -134,7 +179,10 @@ public sealed class EntradasController : Controller
 
         return RedirectToAction(
             nameof(Detalhes),
-            new { id = item.EntradaID }
+            new
+            {
+                id = item.EntradaID
+            }
         );
     }
 
@@ -154,7 +202,10 @@ public sealed class EntradasController : Controller
 
             return RedirectToAction(
                 nameof(Detalhes),
-                new { id = entradaID }
+                new
+                {
+                    id = entradaID
+                }
             );
         }
 
@@ -165,17 +216,21 @@ public sealed class EntradasController : Controller
 
             return RedirectToAction(
                 nameof(Detalhes),
-                new { id = entradaID }
+                new
+                {
+                    id = entradaID
+                }
             );
         }
 
         try
         {
-            await _entradaRepository.AtualizarItemAsync(
-                itemEntradaID,
-                quantidade,
-                custoUnitario
-            );
+            await _entradaRepository
+                .AtualizarItemAsync(
+                    itemEntradaID,
+                    quantidade,
+                    custoUnitario
+                );
 
             TempData["MensagemSucesso"] =
                 "Item atualizado com sucesso.";
@@ -189,7 +244,10 @@ public sealed class EntradasController : Controller
 
         return RedirectToAction(
             nameof(Detalhes),
-            new { id = entradaID }
+            new
+            {
+                id = entradaID
+            }
         );
     }
 
@@ -203,16 +261,18 @@ public sealed class EntradasController : Controller
         try
         {
             var entradaEncontradaID =
-                await _entradaRepository.RemoverItemAsync(
-                    itemEntradaID
-                );
+                await _entradaRepository
+                    .RemoverItemAsync(itemEntradaID);
 
             TempData["MensagemSucesso"] =
                 "Item removido da entrada.";
 
             return RedirectToAction(
                 nameof(Detalhes),
-                new { id = entradaEncontradaID }
+                new
+                {
+                    id = entradaEncontradaID
+                }
             );
         }
         catch (SqlException exception)
@@ -223,7 +283,10 @@ public sealed class EntradasController : Controller
 
             return RedirectToAction(
                 nameof(Detalhes),
-                new { id = entradaID }
+                new
+                {
+                    id = entradaID
+                }
             );
         }
     }
@@ -234,7 +297,8 @@ public sealed class EntradasController : Controller
     {
         try
         {
-            await _entradaRepository.ConfirmarAsync(id);
+            await _entradaRepository
+                .ConfirmarAsync(id);
 
             TempData["MensagemSucesso"] =
                 "Entrada confirmada e estoque atualizado.";
@@ -248,8 +312,28 @@ public sealed class EntradasController : Controller
 
         return RedirectToAction(
             nameof(Detalhes),
-            new { id }
+            new
+            {
+                id
+            }
         );
+    }
+
+    private async Task CarregarFornecedoresFiltroAsync(
+        int? fornecedorSelecionado
+    )
+    {
+        var fornecedores =
+            await _entradaRepository
+                .ListarFornecedoresAsync();
+
+        ViewBag.FornecedoresFiltro =
+            new SelectList(
+                fornecedores,
+                nameof(OpcaoSelecaoViewModel.ID),
+                nameof(OpcaoSelecaoViewModel.Nome),
+                fornecedorSelecionado
+            );
     }
 
     private async Task CarregarFornecedoresAsync(
@@ -260,12 +344,13 @@ public sealed class EntradasController : Controller
             await _entradaRepository
                 .ListarFornecedoresAtivosAsync();
 
-        ViewBag.Fornecedores = new SelectList(
-            fornecedores,
-            nameof(OpcaoSelecaoViewModel.ID),
-            nameof(OpcaoSelecaoViewModel.Nome),
-            fornecedorSelecionado
-        );
+        ViewBag.Fornecedores =
+            new SelectList(
+                fornecedores,
+                nameof(OpcaoSelecaoViewModel.ID),
+                nameof(OpcaoSelecaoViewModel.Nome),
+                fornecedorSelecionado
+            );
     }
 
     private async Task CarregarProdutosAsync()
@@ -274,19 +359,25 @@ public sealed class EntradasController : Controller
             await _entradaRepository
                 .ListarProdutosAtivosAsync();
 
-        ViewBag.Produtos = new SelectList(
-            produtos,
-            nameof(OpcaoSelecaoViewModel.ID),
-            nameof(OpcaoSelecaoViewModel.Nome)
-        );
+        ViewBag.Produtos =
+            new SelectList(
+                produtos,
+                nameof(OpcaoSelecaoViewModel.ID),
+                nameof(OpcaoSelecaoViewModel.Nome)
+            );
     }
 
     private int ObterUsuarioIDAutenticado()
     {
         var identificador =
-            User.FindFirstValue(ClaimTypes.NameIdentifier);
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
 
-        if (!int.TryParse(identificador, out var usuarioID))
+        if (!int.TryParse(
+                identificador,
+                out var usuarioID
+            ))
         {
             throw new InvalidOperationException(
                 "Não foi possível identificar o usuário autenticado."
@@ -309,7 +400,8 @@ public sealed class EntradasController : Controller
         SqlException exception
     )
     {
-        return exception.Number is >= 50001 and <= 50013;
+        return exception.Number
+            is >= 50001 and <= 50013;
     }
 
     private static string ObterMensagemErro(
@@ -318,23 +410,89 @@ public sealed class EntradasController : Controller
     {
         return exception.Number switch
         {
-            50001 => "Fornecedor inexistente ou inativo.",
-            50002 => "Usuário inexistente ou inativo.",
-            50003 => "A quantidade deve ser maior que zero.",
-            50004 => "O custo unitário não pode ser negativo.",
-            50005 => "A entrada não existe ou não está aberta.",
-            50006 => "Produto inexistente ou inativo.",
-            50007 => "O produto já foi adicionado à entrada.",
-            50008 => "A entrada não existe ou não está aberta.",
+            50001 =>
+                "Fornecedor inexistente ou inativo.",
+
+            50002 =>
+                "Usuário inexistente ou inativo.",
+
+            50003 =>
+                "A quantidade deve ser maior que zero.",
+
+            50004 =>
+                "O custo unitário não pode ser negativo.",
+
+            50005 =>
+                "A entrada não existe ou não está aberta.",
+
+            50006 =>
+                "Produto inexistente ou inativo.",
+
+            50007 =>
+                "O produto já foi adicionado à entrada.",
+
+            50008 =>
+                "A entrada não existe ou não está aberta.",
+
             50009 =>
                 "Adicione pelo menos um produto antes de confirmar.",
-            50010 => "A quantidade deve ser maior que zero.",
-            50011 => "O custo unitário não pode ser negativo.",
+
+            50010 =>
+                "A quantidade deve ser maior que zero.",
+
+            50011 =>
+                "O custo unitário não pode ser negativo.",
+
             50012 =>
                 "O item não existe ou a entrada não está aberta.",
+
             50013 =>
                 "O item não existe ou a entrada não está aberta.",
-            _ => "Não foi possível concluir a operação."
+
+            _ =>
+                "Não foi possível concluir a operação."
         };
+    }
+
+    private static void NormalizarConsulta(
+        EntradaConsultaViewModel consulta
+    )
+    {
+        if (consulta.EntradaID <= 0)
+        {
+            consulta.EntradaID = null;
+        }
+
+        if (consulta.FornecedorID <= 0)
+        {
+            consulta.FornecedorID = null;
+        }
+
+        consulta.DataInicial =
+            consulta.DataInicial?.Date;
+
+        consulta.DataFinal =
+            consulta.DataFinal?.Date;
+
+        consulta.Pagina =
+            Math.Max(consulta.Pagina, 1);
+
+        if (consulta.TamanhoPagina
+            is not (10 or 25 or 50))
+        {
+            consulta.TamanhoPagina = 10;
+        }
+
+        consulta.Status =
+            consulta.Status?
+                .Trim()
+                .ToUpperInvariant()
+            switch
+            {
+                "ABERTA" => "ABERTA",
+                "CONFIRMADA" => "CONFIRMADA",
+                "CANCELADA" => "CANCELADA",
+                _ => "TODOS"
+            };
     }
 }
